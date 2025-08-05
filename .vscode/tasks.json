@@ -66,9 +66,7 @@
 			"label": "Smart Commit (Universal)",
 			"type": "shell",
 			"command": "node",
-			"args": [
-				"${workspaceFolder}/scripts/smart-commit.js"
-			],
+			"args": ["${workspaceFolder}/scripts/smart-commit.js"],
 			"group": "build",
 			"presentation": {
 				"echo": true,
@@ -82,9 +80,7 @@
 			"label": "Quick Commit (Universal)",
 			"type": "shell",
 			"command": "node",
-			"args": [
-				"${workspaceFolder}/scripts/quick-commit.js"
-			],
+			"args": ["${workspaceFolder}/scripts/quick-commit.js"],
 			"group": "build",
 			"presentation": {
 				"echo": true,
