@@ -137,13 +137,12 @@ fi
 
 show_changes_preview "$status"
 
-message="$1"
 if [ -z "$message" ]; then
     stats=$(analyze_changes "$status")
     message=$(generate_commit_message "$stats")
     
     echo -e "\033[36mGenerated commit message: \033[0m'$message'"
-    echo -n "Use this message? (Y/n/edit): "
+    echo -n "Use this message? (Y/n/edit/append): "
     read -r confirm
     
     case "$confirm" in
@@ -151,11 +150,20 @@ if [ -z "$message" ]; then
             echo -n "Enter custom commit message: "
             read -r message
             ;;
-        e|edit)
+        e|edit|E)
             echo -n "Edit message [$message]: "
             read -r custom_message
             if [ -n "$custom_message" ]; then
                 message="$custom_message"
+            fi
+            ;;
+        a|append|A)
+            echo -n "Add to message '$message': "
+            read -r addition
+            if [ -n "$addition" ]; then
+                message="$message
+
+$addition"
             fi
             ;;
     esac

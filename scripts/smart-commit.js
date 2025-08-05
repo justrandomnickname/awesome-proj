@@ -129,14 +129,21 @@ async function main() {
 		message = generateCommitMessage(changes)
 		console.log(`\x1b[36mGenerated commit message: \x1b[0m'${message}'`)
 		
-		const confirm = await question('Use this message? (Y/n/edit): ')
+		const confirm = await question('Use this message? (Y/n/edit/append): ')
 		
 		if (confirm.toLowerCase() === 'n') {
 			message = await question('Enter custom commit message: ')
-		} else if (confirm.toLowerCase() === 'edit') {
+		} else if (confirm.toLowerCase() === 'edit' || confirm.toLowerCase() === 'e') {
 			const customMessage = await question(`Edit message [${message}]: `)
 			if (customMessage.trim()) {
 				message = customMessage
+			}
+		} else if (confirm.toLowerCase() === 'append' || confirm.toLowerCase() === 'a') {
+			const addition = await question(`Add to message "${message}": `)
+			if (addition.trim()) {
+				message = `${message}
+
+${addition}`
 			}
 		}
 	}

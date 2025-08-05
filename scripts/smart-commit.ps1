@@ -138,12 +138,20 @@ if (-not $message) {
     Write-Host "Generated commit message: " -NoNewline -ForegroundColor Cyan
     Write-Host "'$message'" -ForegroundColor White
     
-    $confirm = Read-Host "Use this message? (Y/n/edit)"
+    $confirm = Read-Host "Use this message? (Y/n/edit/append)"
     
     if ($confirm -eq "n") {
         $message = Read-Host "Enter custom commit message"
-    } elseif ($confirm -eq "edit") {
-        $message = Read-Host "Edit message" -DefaultValue $message
+    } elseif ($confirm -eq "edit" -or $confirm -eq "e") {
+        $newMessage = Read-Host "Edit message [$message]"
+        if ($newMessage.Trim()) {
+            $message = $newMessage
+        }
+    } elseif ($confirm -eq "append" -or $confirm -eq "a") {
+        $addition = Read-Host "Add to message '$message'"
+        if ($addition.Trim()) {
+            $message = "$message`n`n$addition"
+        }
     }
 }
 
