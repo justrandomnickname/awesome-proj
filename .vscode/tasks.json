@@ -25,7 +25,7 @@
 			}
 		},
 		{
-			"label": "Smart Commit",
+			"label": "Smart Commit (Windows)",
 			"type": "shell",
 			"command": "powershell.exe",
 			"args": [
@@ -44,7 +44,7 @@
 			"problemMatcher": []
 		},
 		{
-			"label": "Quick Commit",
+			"label": "Quick Commit (Windows)",
 			"type": "shell",
 			"command": "powershell.exe",
 			"args": [
@@ -52,6 +52,38 @@
 				"Bypass",
 				"-File",
 				"${workspaceFolder}/scripts/quick-commit.ps1"
+			],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": true,
+				"panel": "new"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Smart Commit (Universal)",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"${workspaceFolder}/scripts/smart-commit.js"
+			],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": true,
+				"panel": "new"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Quick Commit (Universal)",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"${workspaceFolder}/scripts/quick-commit.js"
 			],
 			"group": "build",
 			"presentation": {
