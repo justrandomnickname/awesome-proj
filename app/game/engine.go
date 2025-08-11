@@ -5,16 +5,15 @@ import (
 	"fmt"
 
 	"awesome-proj/app/domain/aggregates"
-	"awesome-proj/app/domain/entities"
 	"awesome-proj/app/domain/services"
 )
 
 // GameEngine - центральный игровой движок-оркестратор
 type GameEngine struct {
-	ctx           context.Context
-	currentPlayer *entities.NPC // игрок теперь тоже NPC
-	currentWorld  *aggregates.World
-	isRunning     bool
+	ctx          context.Context
+	currentWorld *aggregates.World
+	gameState    *GameState
+	isRunning    bool
 }
 
 // NewGameEngine creates a new game engine instance
@@ -25,6 +24,7 @@ func NewGameEngine() *GameEngine {
 	
 	return &GameEngine{
 		currentWorld: world,
+		gameState:    NewGameState(),
 		isRunning:    false,
 	}
 }
@@ -37,62 +37,39 @@ func (g *GameEngine) Initialize(ctx context.Context) error {
 	return nil
 }
 
-// CreatePlayer creates a new player (as NPC)
-func (g *GameEngine) CreatePlayer(name string) *entities.NPC {
-	player := &entities.NPC{
-		ID:          fmt.Sprintf("player_%s", name),
-		Name:        name,
-		Race:        "human", // можно будет выбирать позже
-		LocationID:  "start",
-		Description: "Это вы - главный герой этой истории",
-		Level:       1,
+// GetCurrentLocationInfo returns current location info for frontend
+func (g *GameEngine) GetCurrentLocationInfo() (*LocationInfo, error) {
+	if g.gameState == nil {
+		return nil, fmt.Errorf("game state not initialized")
 	}
 	
-	g.currentPlayer = player
-	return player
-}
-
-// GetCurrentPlayer returns the current player
-func (g *GameEngine) GetCurrentPlayer() *entities.NPC {
-	return g.currentPlayer
-}
-
-// GetCurrentLocation returns player's current location
-func (g *GameEngine) GetCurrentLocation() *entities.Location {
-	if g.currentPlayer == nil {
-		return nil
+	currentLocationID := g.gameState.GetCurrentLocationID()
+	location := g.currentWorld.Locations[currentLocationID]
+	
+	if location == nil {
+		return nil, fmt.Errorf("location %s not found", currentLocationID)
 	}
 	
-	return g.currentWorld.Locations[g.currentPlayer.LocationID]
-}
-
-// MovePlayer moves player to a new location
-func (g *GameEngine) MovePlayer(direction string) (*entities.Location, error) {
-	currentLocation := g.GetCurrentLocation()
-	if currentLocation == nil {
-		return nil, fmt.Errorf("player has no current location")
+	// Get NPCs in this location
+	npcInfos := make([]NPCInfo, 0)
+	for _, npcID := range location.NPCs {
+		if npc, exists := g.currentWorld.NPCs[npcID]; exists {
+			npcInfo := NPCInfo{
+				ID:          npc.ID,
+				Name:        npc.Name,
+				Race:        npc.Race,
+				Description: npc.Description,
+			}
+			npcInfos = append(npcInfos, npcInfo)
+		}
 	}
 	
-	nextLocationID, exists := currentLocation.Exits[direction]
-	if !exists {
-		return nil, fmt.Errorf("cannot go %s from here", direction)
-	}
-	
-	nextLocation := g.currentWorld.Locations[nextLocationID]
-	if nextLocation == nil {
-		return nil, fmt.Errorf("location %s does not exist", nextLocationID)
-	}
-	
-	g.currentPlayer.LocationID = nextLocationID
-	return nextLocation, nil
-}
-
-// GetNPCsInLocation returns all NPCs in the given location
-func (g *GameEngine) GetNPCsInLocation(locationID string) []string {
-	if location := g.currentWorld.Locations[locationID]; location != nil {
-		return location.NPCs
-	}
-	return []string{}
+	return &LocationInfo{
+		ID:          location.ID,
+		Name:        location.Name,
+		Description: location.Description,
+		NPCs:        npcInfos,
+	}, nil
 }
 
 // IsRunning returns whether the game engine is running

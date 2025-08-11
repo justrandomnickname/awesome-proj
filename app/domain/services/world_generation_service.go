@@ -26,8 +26,8 @@ func (wgs *WorldGenerationService) GenerateWorld(name string, seed int64) *aggre
 	// Generate random number generator with seed
 	rng := rand.New(rand.NewSource(seed))
 	
-	// Generate locations using infrastructure builder
-	wgs.locationBuilder.GenerateRandomLocations(world, rng, 3)
+	// Generate one starting location using infrastructure builder
+	wgs.locationBuilder.GenerateRandomLocations(world, rng, 1)
 	
 	return world
 }

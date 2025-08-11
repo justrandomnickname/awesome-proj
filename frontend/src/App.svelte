@@ -1,79 +1,67 @@
 <script lang="ts">
-  import logo from './assets/images/logo-universal.png'
-  import {Greet} from '../wailsjs/go/app/App.js'
+  import LocationScreen from './lib/LocationScreen.svelte'
 
-  let resultText: string = "Please enter your name below 👇"
-  let name: string
-
-  function greet(): void {
-    Greet(name).then(result => resultText = result)
-  }
+  const playerName = "developer" // Имя для разработки
 </script>
 
 <main>
-  <img alt="Wails logo" id="logo" src="{logo}">
-  <div class="result" id="result">{resultText}</div>
-  <div class="input-box" id="input">
-    <input autocomplete="off" bind:value={name} class="input" id="name" type="text"/>
-    <button class="btn" on:click={greet}>Greet</button>
+  <!-- Игровой экран сразу -->
+  <div class="game-interface">
+    <div class="game-header">
+      <h1>⚔️ RPG Приключение</h1>
+      <div class="header-controls">
+        <span class="player-name">Игрок: {playerName}</span>
+      </div>
+    </div>
+    
+    <LocationScreen />
   </div>
 </main>
 
 <style>
-
-  #logo {
-    display: block;
-    width: 50%;
-    height: 50%;
-    margin: auto;
-    padding: 10% 0 0;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: 100% 100%;
-    background-origin: content-box;
+  main {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
   }
 
-  .result {
-    height: 20px;
-    line-height: 20px;
-    margin: 1.5rem auto;
+  .game-interface {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
   }
 
-  .input-box .btn {
-    width: 60px;
-    height: 30px;
-    line-height: 30px;
-    border-radius: 3px;
-    border: none;
-    margin: 0 0 0 20px;
-    padding: 0 8px;
-    cursor: pointer;
+  .game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px 25px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    backdrop-filter: blur(10px);
   }
 
-  .input-box .btn:hover {
-    background-image: linear-gradient(to top, #cfd9df 0%, #e2ebf0 100%);
-    color: #333333;
+  .game-header h1 {
+    color: #fff;
+    margin: 0;
+    font-size: 1.8em;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
   }
 
-  .input-box .input {
-    border: none;
-    border-radius: 3px;
-    outline: none;
-    height: 30px;
-    line-height: 30px;
-    padding: 0 10px;
-    background-color: rgba(240, 240, 240, 1);
-    -webkit-font-smoothing: antialiased;
+  .header-controls {
+    display: flex;
+    align-items: center;
+    gap: 20px;
   }
 
-  .input-box .input:hover {
-    border: none;
-    background-color: rgba(255, 255, 255, 1);
+  .player-name {
+    color: #fff;
+    font-weight: bold;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 8px 15px;
+    border-radius: 20px;
   }
-
-  .input-box .input:focus {
-    border: none;
-    background-color: rgba(255, 255, 255, 1);
-  }
-
 </style>

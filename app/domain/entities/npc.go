@@ -7,5 +7,4 @@ type NPC struct {
 	Race        string `json:"race"`
 	LocationID  string `json:"location_id"`
 	Description string `json:"description"`
-	Level       int    `json:"level"`
 }

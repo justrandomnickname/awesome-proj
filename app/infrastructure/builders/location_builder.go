@@ -11,6 +11,7 @@ import (
 type WorldInterface interface {
 	GetLocations() map[string]*entities.Location
 	AddLocation(id string, location *entities.Location)
+	AddNPC(npc *entities.NPC)
 }
 
 // LocationBuilder handles location generation for worlds
@@ -18,6 +19,7 @@ type LocationBuilder struct {
 	locationTypes []string
 	locationNames []string
 	descriptions  map[string][]string
+	npcBuilder    *NPCBuilder
 }
 
 // NewLocationBuilder creates a new location builder
@@ -68,39 +70,21 @@ func NewLocationBuilder() *LocationBuilder {
 				"Плато на вершине горы",
 			},
 		},
+		npcBuilder: NewNPCBuilder(),
 	}
 }
 
 // GenerateRandomLocations creates random locations for a world
 func (lb *LocationBuilder) GenerateRandomLocations(world WorldInterface, rng *rand.Rand, count int) {
-	// Create starting location
-	startLocation := &entities.Location{
-		ID:          "start",
-		Name:        "Точка пробуждения",
-		Description: "Темное место, где вы очнулись. Отсюда можно пойти в разные стороны.",
-		Type:        "start",
-		Exits:       make(map[string]string),
-		NPCs:        make([]string, 0),
-	}
-	world.AddLocation("start", startLocation)
-
-	// Generate random locations
+	// Create one starting location as a normal generated location
 	usedNames := make(map[string]bool)
-	directions := []string{"north", "south", "east", "west", "northeast", "southwest", "northwest", "southeast"}
+	startLocation := lb.buildRandomLocation(rng, "start", usedNames)
+	world.AddLocation("start", startLocation)
 	
-	for i := 0; i < count; i++ {
-		location := lb.buildRandomLocation(rng, fmt.Sprintf("loc_%d", i+1), usedNames)
-		world.AddLocation(location.ID, location)
-		
-		// Connect to start location if we have directions left
-		if i < len(directions) {
-			direction := directions[i]
-			startLocation.Exits[direction] = location.ID
-			
-			// Add reverse direction
-			reverseDir := lb.getReverseDirection(direction)
-			location.Exits[reverseDir] = "start"
-		}
+	// Generate NPCs for starting location
+	npcs := lb.npcBuilder.GenerateNPCsForLocation(startLocation, rng)
+	for _, npc := range npcs {
+		world.AddNPC(npc)
 	}
 }
 
@@ -133,41 +117,4 @@ func (lb *LocationBuilder) buildRandomLocation(rng *rand.Rand, locationID string
 		Exits:       make(map[string]string),
 		NPCs:        make([]string, 0),
 	}
-}
-
-// getReverseDirection returns the opposite direction
-func (lb *LocationBuilder) getReverseDirection(direction string) string {
-	reverseMap := map[string]string{
-		"north":     "south",
-		"south":     "north",
-		"east":      "west",
-		"west":      "east",
-		"northeast": "southwest",
-		"southwest": "northeast",
-		"northwest": "southeast",
-		"southeast": "northwest",
-	}
-	
-	if reverse, exists := reverseMap[direction]; exists {
-		return reverse
-	}
-	return "back" // fallback
-}
-
-// AddLocationTypes allows extending location types
-func (lb *LocationBuilder) AddLocationTypes(types ...string) {
-	lb.locationTypes = append(lb.locationTypes, types...)
-}
-
-// AddLocationNames allows extending location names
-func (lb *LocationBuilder) AddLocationNames(names ...string) {
-	lb.locationNames = append(lb.locationNames, names...)
-}
-
-// AddDescriptions allows adding descriptions for location types
-func (lb *LocationBuilder) AddDescriptions(locationType string, descriptions ...string) {
-	if lb.descriptions[locationType] == nil {
-		lb.descriptions[locationType] = make([]string, 0)
-	}
-	lb.descriptions[locationType] = append(lb.descriptions[locationType], descriptions...)
 }
