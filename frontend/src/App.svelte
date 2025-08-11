@@ -1,6 +1,6 @@
 <script lang="ts">
   import logo from './assets/images/logo-universal.png'
-  import {Greet} from '../wailsjs/go/main/App.js'
+  import {Greet} from '../wailsjs/go/app/App.js'
 
   let resultText: string = "Please enter your name below 👇"
   let name: string
