@@ -1,3 +1,7 @@
 build/bin
 node_modules
 frontend/dist
+
+# Игровые сохранения (не должны попадать в репозиторий)
+saves/
+*.json
