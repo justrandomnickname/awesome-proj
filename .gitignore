@@ -5,3 +5,9 @@ frontend/dist
 # Игровые сохранения (не должны попадать в репозиторий)
 saves/
 *.json
+
+# Исполняемые файлы
+awesome-proj.exe
+*.exe
+*.app
+awesome-proj
