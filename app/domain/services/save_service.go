@@ -9,27 +9,12 @@ import (
 	"time"
 
 	"awesome-proj/app/domain/aggregates"
+	"awesome-proj/app/domain/entities"
 )
 
 // SaveService handles game save/load operations
 type SaveService struct {
 	savesDir string
-}
-
-// SaveData represents the complete game state for persistence
-type SaveData struct {
-	SaveName    string                `json:"save_name"`
-	CreatedAt   time.Time            `json:"created_at"`
-	World       *aggregates.World    `json:"world"`
-	GameState   interface{}          `json:"game_state"` // используем interface{} для гибкости
-	Version     string               `json:"version"`    // для будущей совместимости
-}
-
-// SaveInfo represents save file metadata
-type SaveInfo struct {
-	Name      string    `json:"name"`
-	CreatedAt time.Time `json:"created_at"`
-	Filename  string    `json:"filename"`
 }
 
 // NewSaveService creates a new save service
@@ -58,7 +43,7 @@ func (s *SaveService) SaveGame(saveName string, world *aggregates.World, gameSta
 		return fmt.Errorf("invalid save name")
 	}
 	
-	saveData := &SaveData{
+	saveData := &entities.SaveData{
 		SaveName:  saveName,
 		CreatedAt: time.Now(),
 		World:     world,
@@ -99,29 +84,35 @@ func (s *SaveService) LoadGame(filename string) (*aggregates.World, interface{},
 	}
 	defer file.Close()
 	
-	var saveData SaveData
+	var saveData entities.SaveData
 	decoder := json.NewDecoder(file)
 	
 	if err := decoder.Decode(&saveData); err != nil {
 		return nil, nil, fmt.Errorf("could not decode save data: %v", err)
 	}
 	
-	return saveData.World, saveData.GameState, nil
+	// Type assertion для World
+	world, ok := saveData.World.(*aggregates.World)
+	if !ok {
+		return nil, nil, fmt.Errorf("invalid world data in save file")
+	}
+	
+	return world, saveData.GameState, nil
 }
 
 // GetSavesList returns list of available save files
-func (s *SaveService) GetSavesList() ([]SaveInfo, error) {
+func (s *SaveService) GetSavesList() ([]entities.SaveInfo, error) {
 	// Создаем папку saves если её нет
 	if err := os.MkdirAll(s.savesDir, 0755); err != nil {
-		return []SaveInfo{}, fmt.Errorf("could not create saves directory: %v", err)
+		return []entities.SaveInfo{}, fmt.Errorf("could not create saves directory: %v", err)
 	}
 	
 	files, err := os.ReadDir(s.savesDir)
 	if err != nil {
-		return []SaveInfo{}, fmt.Errorf("could not read saves directory: %v", err)
+		return []entities.SaveInfo{}, fmt.Errorf("could not read saves directory: %v", err)
 	}
 	
-	var saves []SaveInfo
+	var saves []entities.SaveInfo
 	
 	for _, file := range files {
 		if !file.IsDir() && strings.HasSuffix(file.Name(), ".json") {
@@ -130,7 +121,7 @@ func (s *SaveService) GetSavesList() ([]SaveInfo, error) {
 			if err != nil {
 				// Если не можем прочитать - создаем базовую информацию
 				fileInfo, _ := file.Info()
-				saveInfo = SaveInfo{
+				saveInfo = entities.SaveInfo{
 					Name:      strings.TrimSuffix(file.Name(), ".json"),
 					CreatedAt: fileInfo.ModTime(),
 					Filename:  file.Name(),
@@ -170,23 +161,23 @@ func (s *SaveService) LoadFirstAvailableSave() (*aggregates.World, interface{}, 
 }
 
 // getSaveInfo reads save metadata from file
-func (s *SaveService) getSaveInfo(filename string) (SaveInfo, error) {
+func (s *SaveService) getSaveInfo(filename string) (entities.SaveInfo, error) {
 	filePath := filepath.Join(s.savesDir, filename)
 	
 	file, err := os.Open(filePath)
 	if err != nil {
-		return SaveInfo{}, err
+		return entities.SaveInfo{}, err
 	}
 	defer file.Close()
 	
-	var saveData SaveData
+	var saveData entities.SaveData
 	decoder := json.NewDecoder(file)
 	
 	if err := decoder.Decode(&saveData); err != nil {
-		return SaveInfo{}, err
+		return entities.SaveInfo{}, err
 	}
 	
-	return SaveInfo{
+	return entities.SaveInfo{
 		Name:      saveData.SaveName,
 		CreatedAt: saveData.CreatedAt,
 		Filename:  filename,

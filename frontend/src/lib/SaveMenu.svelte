@@ -1,8 +1,8 @@
 <script lang="ts">
   import { GetSavesList, SaveGame, LoadGame, DeleteSave, NewGame } from '../../wailsjs/go/app/App';
-  import { app } from '../../wailsjs/go/models';
+  import { entities } from '../../wailsjs/go/models';
 
-  type SaveInfo = app.SaveInfo;
+  type SaveInfo = entities.SaveInfo;
 
   let isOpen = false;
   let saves: SaveInfo[] = [];

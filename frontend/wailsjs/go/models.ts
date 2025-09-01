@@ -1,20 +1,24 @@
-export namespace app {
+export namespace entities {
 	
-	export class SaveInfo {
-	    name: string;
+	export class Interaction {
+	    id: string;
+	    type: string;
+	    content: string;
+	    location_id: string;
 	    // Go type: time
-	    created_at: any;
-	    filename: string;
+	    timestamp: any;
 	
 	    static createFrom(source: any = {}) {
-	        return new SaveInfo(source);
+	        return new Interaction(source);
 	    }
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.name = source["name"];
-	        this.created_at = this.convertValues(source["created_at"], null);
-	        this.filename = source["filename"];
+	        this.id = source["id"];
+	        this.type = source["type"];
+	        this.content = source["content"];
+	        this.location_id = source["location_id"];
+	        this.timestamp = this.convertValues(source["timestamp"], null);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -35,19 +39,15 @@ export namespace app {
 		    return a;
 		}
 	}
-
-}
-
-export namespace game {
-	
-	export class NPCInfo {
+	export class NPC {
 	    id: string;
 	    name: string;
 	    race: string;
+	    location_id: string;
 	    description: string;
 	
 	    static createFrom(source: any = {}) {
-	        return new NPCInfo(source);
+	        return new NPC(source);
 	    }
 	
 	    constructor(source: any = {}) {
@@ -55,17 +55,23 @@ export namespace game {
 	        this.id = source["id"];
 	        this.name = source["name"];
 	        this.race = source["race"];
+	        this.location_id = source["location_id"];
 	        this.description = source["description"];
 	    }
 	}
-	export class LocationInfo {
+	export class Location {
 	    id: string;
 	    name: string;
 	    description: string;
-	    npcs: NPCInfo[];
+	    current_state: string;
+	    type: string;
+	    exits: Record<string, string>;
+	    npcs: string[];
+	    npcs_detailed?: NPC[];
+	    interactions?: Interaction[];
 	
 	    static createFrom(source: any = {}) {
-	        return new LocationInfo(source);
+	        return new Location(source);
 	    }
 	
 	    constructor(source: any = {}) {
@@ -73,7 +79,48 @@ export namespace game {
 	        this.id = source["id"];
 	        this.name = source["name"];
 	        this.description = source["description"];
-	        this.npcs = this.convertValues(source["npcs"], NPCInfo);
+	        this.current_state = source["current_state"];
+	        this.type = source["type"];
+	        this.exits = source["exits"];
+	        this.npcs = source["npcs"];
+	        this.npcs_detailed = this.convertValues(source["npcs_detailed"], NPC);
+	        this.interactions = this.convertValues(source["interactions"], Interaction);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
+	export class SaveInfo {
+	    name: string;
+	    // Go type: time
+	    created_at: any;
+	    filename: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new SaveInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.created_at = this.convertValues(source["created_at"], null);
+	        this.filename = source["filename"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

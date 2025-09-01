@@ -26,6 +26,10 @@ export function NewGame(arg1) {
   return window['go']['app']['App']['NewGame'](arg1);
 }
 
+export function PerformPlayerAction(arg1) {
+  return window['go']['app']['App']['PerformPlayerAction'](arg1);
+}
+
 export function SaveGame(arg1) {
   return window['go']['app']['App']['SaveGame'](arg1);
 }

@@ -1,9 +1,12 @@
 package game
 
+import "awesome-proj/app/domain/entities"
+
 // GameState holds the current game state
 type GameState struct {
-	CurrentLocationID string `json:"current_location_id"`
-	WorldSeed         int64  `json:"world_seed"` // Сид для генерации всего мира
+	CurrentLocationID string                           `json:"current_location_id"`
+	WorldSeed         int64                            `json:"world_seed"` // Сид для генерации всего мира
+	LocationStates    map[string]*entities.LocationState `json:"location_states"` // Состояния всех посещенных локаций
 	// В будущем добавим:
 	// CurrentPlayerID   string
 	// GameTime         int64
@@ -15,6 +18,7 @@ func NewGameState(worldSeed int64) *GameState {
 	return &GameState{
 		CurrentLocationID: "start", // начинаем со стартовой локации
 		WorldSeed:         worldSeed,
+		LocationStates:    make(map[string]*entities.LocationState),
 	}
 }
 
@@ -33,18 +37,27 @@ func (gs *GameState) GetWorldSeed() int64 {
 	return gs.WorldSeed
 }
 
-// LocationInfo represents location information for frontend
-type LocationInfo struct {
-	ID          string    `json:"id"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	NPCs        []NPCInfo `json:"npcs"`
+// GetLocationState returns the state for a specific location
+func (gs *GameState) GetLocationState(locationID string) *entities.LocationState {
+	state, exists := gs.LocationStates[locationID]
+	if !exists {
+		// Создаем новое состояние для локации при первом посещении
+		state = &entities.LocationState{
+			LocationID:   locationID,
+			Interactions: make([]entities.Interaction, 0),
+			FirstVisit:   true,
+		}
+		gs.LocationStates[locationID] = state
+	}
+	return state
 }
 
-// NPCInfo represents NPC information for frontend
-type NPCInfo struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Race        string `json:"race"`
-	Description string `json:"description"`
+// AddInteractionToCurrentLocation adds an interaction to the current location
+func (gs *GameState) AddInteractionToCurrentLocation(interaction entities.Interaction) {
+	locationState := gs.GetLocationState(gs.CurrentLocationID)
+	locationState.AddInteraction(interaction)
+	// После первого взаимодействия больше не первое посещение
+	if locationState.FirstVisit {
+		locationState.FirstVisit = false
+	}
 }
