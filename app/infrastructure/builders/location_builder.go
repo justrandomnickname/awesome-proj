@@ -1,20 +1,16 @@
 package builders
 
 import (
+	"awesome-proj/app/domain/entities"
 	"fmt"
 	"math/rand"
-
-	"awesome-proj/app/domain/entities"
 )
 
-// WorldInterface defines what builder needs from World
 type WorldInterface interface {
 	GetLocations() map[string]*entities.Location
 	AddLocation(id string, location *entities.Location)
 	AddNPC(npc *entities.NPC)
 }
-
-// LocationBuilder handles location generation for worlds
 type LocationBuilder struct {
 	locationTypes []string
 	locationNames []string
@@ -22,7 +18,6 @@ type LocationBuilder struct {
 	npcBuilder    *NPCBuilder
 }
 
-// NewLocationBuilder creates a new location builder
 func NewLocationBuilder() *LocationBuilder {
 	return &LocationBuilder{
 		locationTypes: []string{"forest", "cave", "village", "ruins", "swamp", "mountain"},
@@ -74,23 +69,17 @@ func NewLocationBuilder() *LocationBuilder {
 	}
 }
 
-// GenerateRandomLocations creates random locations for a world
 func (lb *LocationBuilder) GenerateRandomLocations(world WorldInterface, rng *rand.Rand, count int) {
-	// Create one starting location as a normal generated location
 	usedNames := make(map[string]bool)
 	startLocation := lb.buildRandomLocation(rng, "start", usedNames)
 	world.AddLocation("start", startLocation)
-	
-	// Generate NPCs for starting location
 	npcs := lb.npcBuilder.GenerateNPCsForLocation(startLocation, rng)
 	for _, npc := range npcs {
 		world.AddNPC(npc)
 	}
 }
 
-// buildRandomLocation creates a single random location
 func (lb *LocationBuilder) buildRandomLocation(rng *rand.Rand, locationID string, usedNames map[string]bool) *entities.Location {
-	// Pick random type and name
 	locType := lb.locationTypes[rng.Intn(len(lb.locationTypes))]
 	var name string
 	for {
@@ -100,15 +89,12 @@ func (lb *LocationBuilder) buildRandomLocation(rng *rand.Rand, locationID string
 			break
 		}
 	}
-	
-	// Pick description for this type
 	var description string
 	if descs, exists := lb.descriptions[locType]; exists {
 		description = descs[rng.Intn(len(descs))]
 	} else {
 		description = fmt.Sprintf("Загадочное место типа %s", locType)
 	}
-	
 	return &entities.Location{
 		ID:          locationID,
 		Name:        name,

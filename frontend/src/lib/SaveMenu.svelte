@@ -24,10 +24,10 @@
   }
 
   function closeMenu() {
-    console.log('closeMenu called, isOpen before:', isOpen);
+    
     isOpen = false;
     error = '';
-    console.log('closeMenu done, isOpen after:', isOpen);
+    
   }
 
   async function loadSaves() {
@@ -462,3 +462,4 @@
     cursor: not-allowed;
   }
 </style>
+

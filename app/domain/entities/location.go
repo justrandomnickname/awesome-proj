@@ -1,35 +1,27 @@
 package entities
 
-// Location represents a game location
 type Location struct {
-	ID            string            `json:"id"`
-	Name          string            `json:"name"`
-	Description   string            `json:"description"`
-	CurrentState  string            `json:"current_state"`
-	Type          string            `json:"type"`
-	Exits         map[string]string `json:"exits"`
-	NPCs          []string          `json:"npcs"`
-	
-	// Поля для фронтенда (заполняются через ToFrontendFormat)
-	NPCsDetailed  []*NPC        `json:"npcs_detailed,omitempty"`
-	Interactions  []Interaction `json:"interactions,omitempty"`
+	ID           string            `json:"id"`
+	Name         string            `json:"name"`
+	Description  string            `json:"description"`
+	CurrentState string            `json:"current_state"`
+	Type         string            `json:"type"`
+	Exits        map[string]string `json:"exits"`
+	NPCs         []string          `json:"npcs"`
+	NPCsDetailed []*NPC            `json:"npcs_detailed,omitempty"`
+	Interactions []Interaction     `json:"interactions,omitempty"`
 }
 
-// LocationState represents the current state of a location based on interactions
 type LocationState struct {
 	LocationID   string        `json:"location_id"`
 	Interactions []Interaction `json:"interactions"`
-	// Флаг, указывающий, была ли локация уже посещена
 	FirstVisit   bool          `json:"first_visit"`
 }
 
-// ToFrontendFormat заполняет поля для фронтенда
 func (l *Location) ToFrontendFormat(npcs []*NPC, interactions []Interaction) {
 	l.NPCsDetailed = npcs
 	l.Interactions = interactions
 }
-
-// GetPlayerActions returns only player actions for this location
 func (ls *LocationState) GetPlayerActions() []Interaction {
 	var actions []Interaction
 	for _, interaction := range ls.Interactions {
@@ -37,10 +29,10 @@ func (ls *LocationState) GetPlayerActions() []Interaction {
 			actions = append(actions, interaction)
 		}
 	}
+
 	return actions
 }
 
-// GetLocationResponses returns only location responses for this location
 func (ls *LocationState) GetLocationResponses() []Interaction {
 	var responses []Interaction
 	for _, interaction := range ls.Interactions {
@@ -48,10 +40,53 @@ func (ls *LocationState) GetLocationResponses() []Interaction {
 			responses = append(responses, interaction)
 		}
 	}
+
 	return responses
 }
 
-// AddInteraction adds a new interaction to the location state
 func (ls *LocationState) AddInteraction(interaction Interaction) {
 	ls.Interactions = append(ls.Interactions, interaction)
+}
+
+func NewLocationFromMap(locationData interface{}) *Location {
+	locationMap, ok := locationData.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	location := &Location{
+		ID:           getStringFromMap(locationMap, "id"),
+		Name:         getStringFromMap(locationMap, "name"),
+		Description:  getStringFromMap(locationMap, "description"),
+		CurrentState: getStringFromMap(locationMap, "current_state"),
+		Type:         getStringFromMap(locationMap, "type"),
+		Exits:        make(map[string]string),
+		NPCs:         make([]string, 0),
+	}
+
+	if exitsData, ok := locationMap["exits"].(map[string]interface{}); ok {
+		for key, value := range exitsData {
+			if strValue, ok := value.(string); ok {
+				location.Exits[key] = strValue
+			}
+		}
+	}
+
+	if npcsData, ok := locationMap["npcs"].([]interface{}); ok {
+		for _, npcID := range npcsData {
+			if strNpcID, ok := npcID.(string); ok {
+				location.NPCs = append(location.NPCs, strNpcID)
+			}
+		}
+	}
+
+	return location
+}
+
+func getStringFromMap(m map[string]interface{}, key string) string {
+	if value, ok := m[key].(string); ok {
+		return value
+	}
+
+	return ""
 }
