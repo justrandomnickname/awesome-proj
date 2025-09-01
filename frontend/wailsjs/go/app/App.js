@@ -22,8 +22,8 @@ export function LoadGame(arg1) {
   return window['go']['app']['App']['LoadGame'](arg1);
 }
 
-export function NewGame() {
-  return window['go']['app']['App']['NewGame']();
+export function NewGame(arg1) {
+  return window['go']['app']['App']['NewGame'](arg1);
 }
 
 export function SaveGame(arg1) {

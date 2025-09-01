@@ -13,6 +13,6 @@ export function Greet(arg1:string):Promise<string>;
 
 export function LoadGame(arg1:string):Promise<void>;
 
-export function NewGame():Promise<void>;
+export function NewGame(arg1:number):Promise<void>;
 
 export function SaveGame(arg1:string):Promise<void>;

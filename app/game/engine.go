@@ -30,18 +30,24 @@ func NewGameEngine() *GameEngine {
 	if err != nil {
 		// Если нет сейвов - создаем новую игру
 		worldService := services.NewWorldGenerationService()
-		world = worldService.GenerateWorld("Default World", time.Now().UnixNano())
-		gameState = NewGameState()
+		randomSeed := time.Now().UnixNano()
+		world = worldService.GenerateWorld("Default World", randomSeed)
+		gameState = NewGameState(randomSeed)
 	} else {
 		world = loadedWorld
 		// Десериализуем GameState из interface{}
 		if gsMap, ok := loadedGameState.(map[string]interface{}); ok {
+			worldSeed := int64(0)
+			if seedFloat, ok := gsMap["world_seed"].(float64); ok {
+				worldSeed = int64(seedFloat)
+			}
 			gameState = &GameState{
 				CurrentLocationID: gsMap["current_location_id"].(string),
+				WorldSeed:         worldSeed,
 			}
-		} else {
-			// Если не можем десериализовать - создаем новое состояние
-			gameState = NewGameState()
+		} else {			// Если не можем десериализовать - создаем новое состояние
+			randomSeed := time.Now().UnixNano()
+			gameState = NewGameState(randomSeed)
 		}
 	}
 	
@@ -137,16 +143,15 @@ func (g *GameEngine) DeleteSave(filename string) error {
 	return g.saveService.DeleteSave(filename)
 }
 
-// NewGame starts a new game
-func (g *GameEngine) NewGame() error {
-	fmt.Println("[GameEngine] Starting new game...")
+// NewGame starts a new game with specified seed
+func (g *GameEngine) NewGame(seed int64) error {
+	fmt.Printf("[GameEngine] Starting new game with seed %d...\n", seed)
 	
-	// Создаём новый мир с случайным сидом
+	// Создаём новый мир с переданным сидом
 	worldService := services.NewWorldGenerationService()
-	randomSeed := time.Now().UnixNano() // Генерируем случайный сид на основе времени
-	g.currentWorld = worldService.GenerateWorld("Default World", randomSeed)
-	g.gameState = NewGameState()
-	fmt.Printf("[GameEngine] Created new world with seed %d\n", randomSeed)
+	g.currentWorld = worldService.GenerateWorld("Default World", seed)
+	g.gameState = NewGameState(seed)
+	fmt.Printf("[GameEngine] Created new world with seed %d\n", seed)
 	
 	// Не удаляем сохранения - пользователь может хотеть сохранить новую игру
 	fmt.Println("[GameEngine] New game started successfully")

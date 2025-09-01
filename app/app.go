@@ -82,7 +82,7 @@ func (a *App) DeleteSave(filename string) error {
 	return a.gameEngine.DeleteSave(filename)
 }
 
-// NewGame starts a new game
-func (a *App) NewGame() error {
-	return a.gameEngine.NewGame()
+// NewGame starts a new game with specified seed
+func (a *App) NewGame(seed int64) error {
+	return a.gameEngine.NewGame(seed)
 }

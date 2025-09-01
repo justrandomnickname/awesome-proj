@@ -9,9 +9,17 @@
   let newSaveName = '';
   let loading = false;
   let error = '';
+  let gameSeed = ''; // Seed для новой игры
+
+  // Функция для генерации случайного seed
+  function generateRandomSeed(): string {
+    return Date.now().toString();
+  }
 
   export function openMenu() {
     isOpen = true;
+    // Генерируем новый случайный seed при открытии меню
+    gameSeed = generateRandomSeed();
     loadSaves();
   }
 
@@ -87,7 +95,14 @@
   async function newGame() {
     try {
       loading = true;
-      await NewGame();
+      // Парсим seed как число
+      const seedNumber = parseInt(gameSeed);
+      if (isNaN(seedNumber)) {
+        error = 'Некорректный seed. Введите числовое значение.';
+        return;
+      }
+      
+      await NewGame(seedNumber);
       closeMenu();
       // Перезагружаем страницу чтобы обновить интерфейс с новой игрой
       window.location.reload();
@@ -124,9 +139,33 @@
       <div class="menu-content">
         <!-- Новая игра -->
         <div class="section">
-          <button class="new-game-btn" on:click={newGame} disabled={loading}>
-            🎮 Новая игра
-          </button>
+          <h3>Новая игра</h3>
+          <div class="new-game-form">
+            <div class="seed-input-group">
+              <label for="game-seed">Seed игры:</label>
+              <div>
+                <input
+                  id="game-seed"
+                  type="text"
+                  bind:value={gameSeed}
+                  placeholder="Введите seed или оставьте случайный"
+                  disabled={loading}
+                />
+                <button 
+                  type="button" 
+                  class="regenerate-seed-btn" 
+                  on:click={() => gameSeed = generateRandomSeed()}
+                  disabled={loading}
+                  title="Сгенерировать новый случайный seed"
+                >
+                  🎲
+                </button>
+              </div>
+            </div>
+            <button class="new-game-btn" on:click={newGame} disabled={loading || gameSeed.trim().length === 0}>
+              🎮 Начать новую игру
+            </button>
+          </div>
         </div>
 
         <!-- Сохранить текущую игру -->
@@ -268,6 +307,54 @@
 
   .new-game-btn:hover:not(:disabled) {
     background: #2ecc71;
+  }
+
+  .new-game-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .seed-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .seed-input-group label {
+    color: #bdc3c7;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .seed-input-group > div {
+    display: flex;
+    gap: 8px;
+  }
+
+  .seed-input-group input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #34495e;
+    border-radius: 6px;
+    background: #34495e;
+    color: white;
+    font-size: 14px;
+  }
+
+  .regenerate-seed-btn {
+    background: #f39c12;
+    color: white;
+    border: none;
+    padding: 10px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    min-width: 40px;
+  }
+
+  .regenerate-seed-btn:hover:not(:disabled) {
+    background: #e67e22;
   }
 
   .save-form {
