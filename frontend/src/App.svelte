@@ -20,17 +20,24 @@
 
 <style>
   main {
-    min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 20px;
+    height: 100vh; /* Фиксированная высота */
+    background-color: #1a1a1a;
+    padding: 0;
     display: flex;
     flex-direction: column;
+    overflow: hidden; /* Полностью убираем скролл на уровне main */
+    width: 100%;
+    max-width: 100vw;
   }
 
   .game-interface {
     flex: 1;
     display: flex;
     flex-direction: column;
+    width: 100%;
+    max-width: 100vw;
+    overflow: hidden; /* Убираем скролл на уровне интерфейса */
+    min-height: 0; /* Позволяем flex элементам сжиматься */
   }
 
   .game-header {
