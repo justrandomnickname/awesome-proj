@@ -34,6 +34,21 @@ type Point struct {
 	IsEntryPoint bool      `json:"is_entry_point"`
 }
 
+type ConnectionInfo struct {
+	ID               string            `json:"id"`
+	Name             string            `json:"name"`
+	Description      string            `json:"description"`
+	SubClusterID     string            `json:"sub_cluster_id"`
+	Type             PointType         `json:"type"`
+	Connections      []string          `json:"connections"`
+	ConnectionNames  map[string]string `json:"connection_names"` // ID -> Name соединений
+	NPCs             []string          `json:"npcs"`
+	IsEntryPoint     bool              `json:"is_entry_point"`
+	DisplayName      string            `json:"display_name"`       // Отображаемое имя (может быть "Перейти в Таверна")
+	IsInterCluster   bool              `json:"is_inter_cluster"`   // Переход между субкластерами
+	TargetSubCluster string            `json:"target_sub_cluster"` // Название целевого субкластера
+}
+
 type PointType string
 
 const (
@@ -96,6 +111,17 @@ func (lh *LocationHierarchy) FindSubCluster(subClusterID string) *SubCluster {
 	for _, cluster := range lh.Clusters {
 		if subCluster, exists := cluster.SubClusters[subClusterID]; exists {
 			return subCluster
+		}
+	}
+	return nil
+}
+
+func (lh *LocationHierarchy) FindSubClusterByPoint(pointID string) *SubCluster {
+	for _, cluster := range lh.Clusters {
+		for _, subCluster := range cluster.SubClusters {
+			if _, exists := subCluster.Points[pointID]; exists {
+				return subCluster
+			}
 		}
 	}
 	return nil

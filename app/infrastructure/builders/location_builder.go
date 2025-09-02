@@ -2,6 +2,7 @@ package builders
 
 import (
 	"awesome-proj/app/domain/entities"
+	"awesome-proj/app/infrastructure/builders/static"
 	"fmt"
 	"math/rand"
 )
@@ -37,10 +38,12 @@ type LocationBuilder struct {
 	locationNames    []string
 	descriptions     map[string][]string
 	npcBuilder       *NPCBuilder
+	tavernBuilder    *static.TavernBuilder
 	clusterTemplates []ClusterTemplate
 }
 
 func NewLocationBuilder() *LocationBuilder {
+	npcBuilder := NewNPCBuilder()
 	return &LocationBuilder{
 		locationTypes: []string{"forest", "cave", "village", "ruins", "swamp", "mountain"},
 		locationNames: []string{
@@ -87,7 +90,8 @@ func NewLocationBuilder() *LocationBuilder {
 				"Плато на вершине горы",
 			},
 		},
-		npcBuilder: NewNPCBuilder(),
+		npcBuilder:    npcBuilder,
+		tavernBuilder: static.NewTavernBuilder(npcBuilder),
 		clusterTemplates: []ClusterTemplate{
 			{
 				Name: "Темный лес", Type: "forest",
@@ -178,8 +182,9 @@ func (lb *LocationBuilder) GenerateLocationHierarchy(rng *rand.Rand) *entities.L
 func (lb *LocationBuilder) GenerateLocationHierarchyWithNPCs(world WorldInterface, rng *rand.Rand) *entities.LocationHierarchy {
 	hierarchy := entities.NewLocationHierarchy()
 
+	// Выбираем рандомный шаблон кластера
 	template := lb.clusterTemplates[rng.Intn(len(lb.clusterTemplates))]
-	cluster := lb.buildClusterFromTemplateWithNPCs(template, "start", rng, world)
+	cluster := lb.buildHybridClusterWithTavern(template, "start", rng, world)
 	hierarchy.AddCluster(cluster)
 
 	return hierarchy
@@ -220,6 +225,46 @@ func (lb *LocationBuilder) buildClusterFromTemplateWithNPCs(template ClusterTemp
 
 	if len(subCluster.EntryPoints) > 0 {
 		cluster.MainPoint = subCluster.EntryPoints[0]
+	}
+
+	return cluster
+}
+
+func (lb *LocationBuilder) buildHybridClusterWithTavern(template ClusterTemplate, clusterID string, rng *rand.Rand, world WorldInterface) *entities.Cluster {
+	cluster := &entities.Cluster{
+		ID:          clusterID,
+		Name:        template.Name,
+		Description: template.Description,
+		Type:        template.Type,
+		SubClusters: make(map[string]*entities.SubCluster),
+	}
+
+	// Создаем рандомный субкластер из шаблона
+	randomSubClusterID := fmt.Sprintf("%s_sub_random", clusterID)
+	randomSubCluster := lb.buildSubClusterFromTemplateWithNPCs(template.SubCluster, randomSubClusterID, clusterID, template.Type, rng, world)
+	cluster.AddSubCluster(randomSubCluster)
+
+	// Получаем entry point рандомного субкластера для подключения к таверне
+	var exitPointID string
+	if len(randomSubCluster.EntryPoints) > 0 {
+		exitPointID = randomSubCluster.EntryPoints[0]
+	}
+
+	// Создаем статичный субкластер "Таверна" с подключением к рандомному субкластеру
+	tavernSubCluster := lb.tavernBuilder.GenerateTavernDefault(clusterID, exitPointID, world)
+	cluster.AddSubCluster(tavernSubCluster)
+
+	// Добавляем обратное соединение от рандомного субкластера к таверне
+	if len(tavernSubCluster.EntryPoints) > 0 && exitPointID != "" {
+		tavernEntryPointID := tavernSubCluster.EntryPoints[0]
+		if randomEntryPoint, exists := randomSubCluster.Points[exitPointID]; exists {
+			randomEntryPoint.AddConnection(tavernEntryPointID)
+		}
+	}
+
+	// Устанавливаем главный вход через таверну
+	if len(tavernSubCluster.EntryPoints) > 0 {
+		cluster.MainPoint = tavernSubCluster.EntryPoints[0]
 	}
 
 	return cluster

@@ -218,13 +218,8 @@ func (g *GameEngine) PerformPlayerAction(actionText string) error {
 	return g.PerformPlayerInteraction(actionText, entities.InteractionTypePlayerAction, "")
 }
 
-func (g *GameEngine) PerformPlayerMovement(actionText string) error {
-	currentPoint, err := g.GetCurrentPoint()
-	if err != nil {
-		return fmt.Errorf("failed to get current point: %v", err)
-	}
-
-	additionalContent := fmt.Sprintf("%s", currentPoint.Description)
+func (g *GameEngine) PerformPlayerMovement(actionText string, targetPoint *entities.Point) error {
+	additionalContent := targetPoint.Description
 	return g.PerformPlayerInteraction(actionText, entities.InteractionTypePlayerMovement, additionalContent)
 }
 
@@ -314,7 +309,7 @@ func (g *GameEngine) MoveToPoint(pointID string) error {
 		return fmt.Errorf("cannot move to point %s from current location", pointID)
 	}
 
-	g.PerformPlayerMovement(fmt.Sprintf("Персонаж перешел из %s в %s", currentPoint.Name, targetPoint.Name))
+	g.PerformPlayerMovement(fmt.Sprintf("Персонаж перешел из %s в %s", currentPoint.Name, targetPoint.Name), targetPoint)
 	g.gameState.SetCurrentPointID(pointID)
 	return nil
 }
@@ -331,6 +326,65 @@ func (g *GameEngine) GetAvailableConnections() ([]*entities.Point, error) {
 		point := hierarchy.FindPoint(connectionID)
 		if point != nil {
 			connections = append(connections, point)
+		}
+	}
+
+	return connections, nil
+}
+
+func (g *GameEngine) GetAvailableConnectionsInfo() ([]*entities.ConnectionInfo, error) {
+	currentPoint, err := g.GetCurrentPoint()
+	if err != nil {
+		return nil, err
+	}
+
+	hierarchy := g.currentWorld.GetHierarchy()
+	connections := make([]*entities.ConnectionInfo, 0, len(currentPoint.Connections))
+
+	// Находим текущий субкластер
+	currentSubCluster := hierarchy.FindSubClusterByPoint(currentPoint.ID)
+
+	for _, connectionID := range currentPoint.Connections {
+		point := hierarchy.FindPoint(connectionID)
+		if point != nil {
+			// Создаем мапу имен соединений
+			connectionNames := make(map[string]string)
+			for _, connID := range point.Connections {
+				if connPoint := hierarchy.FindPoint(connID); connPoint != nil {
+					connectionNames[connID] = connPoint.Name
+				}
+			}
+
+			connectionInfo := &entities.ConnectionInfo{
+				ID:              point.ID,
+				Name:            point.Name,
+				Description:     point.Description,
+				SubClusterID:    point.SubClusterID,
+				Type:            point.Type,
+				Connections:     point.Connections,
+				ConnectionNames: connectionNames,
+				NPCs:            point.NPCs,
+				IsEntryPoint:    point.IsEntryPoint,
+			}
+
+			// Определяем, является ли это переходом между субкластерами
+			if currentSubCluster != nil && point.SubClusterID != currentSubCluster.ID {
+				connectionInfo.IsInterCluster = true
+
+				// Находим целевой субкластер
+				targetSubCluster := hierarchy.FindSubCluster(point.SubClusterID)
+				if targetSubCluster != nil {
+					connectionInfo.TargetSubCluster = targetSubCluster.Name
+					connectionInfo.DisplayName = fmt.Sprintf("Перейти в %s", targetSubCluster.Name)
+				} else {
+					connectionInfo.DisplayName = point.Name
+				}
+			} else {
+				connectionInfo.IsInterCluster = false
+				connectionInfo.DisplayName = point.Name
+			}
+
+			connections = append(connections, connectionInfo)
 		}
 	}
 

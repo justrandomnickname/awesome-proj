@@ -141,3 +141,13 @@ func (nb *NPCBuilder) generateDescriptionForRace(race string, rng *rand.Rand) st
 
 	return fmt.Sprintf("Загадочный представитель расы %s", race)
 }
+
+func (nb *NPCBuilder) GenerateInnkeeper(pointID string) *entities.NPC {
+	return &entities.NPC{
+		ID:          fmt.Sprintf("%s_innkeeper", pointID),
+		Name:        "Боб Трактирщик",
+		Race:        "human",
+		LocationID:  pointID,
+		Description: "Дружелюбный хозяин таверны с круглым животом и добрыми глазами",
+	}
+}

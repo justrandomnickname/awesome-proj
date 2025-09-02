@@ -25,7 +25,7 @@ func (i *Interaction) ToFrontendInfo() map[string]interface{} {
 		"id":                 i.ID,
 		"type":               string(i.Type),
 		"content":            i.Content,
-		"timestamp":          i.Timestamp.Format("15:04:05"),
+		"timestamp":          i.Timestamp.Format("02.01 15:04:05"),
 		"additional_content": i.AdditionalContent,
 	}
 }

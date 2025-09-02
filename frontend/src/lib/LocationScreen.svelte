@@ -5,6 +5,7 @@
 		PerformPlayerAction,
 		GetCurrentPoint,
 		GetAvailableConnections,
+		GetAvailableConnectionsInfo,
 		MoveToPoint,
 		GetNPCsForCurrentPoint,
 	} from "../../wailsjs/go/app/App.js"
@@ -49,10 +50,23 @@
 		is_entry_point: boolean
 	}
 
+	interface ConnectionInfo {
+		id: string
+		name: string
+		description: string
+		display_name: string
+		is_inter_cluster: boolean
+		target_sub_cluster: string
+		type: string
+		connections: string[]
+		connection_names: Record<string, string>
+	}
+
 	let locationInfo: LocationInfo | null = null
 	let interactions: LocationInfo["interactions"] = []
 	let currentPoint: Point | null = null
 	let availableConnections: Point[] = []
+	let availableConnectionsInfo: ConnectionInfo[] = []
 	let currentPointNPCs: NPCInfo[] = []
 	let loading = true
 	let error = ""
@@ -114,6 +128,10 @@
 			const connections = await GetAvailableConnections()
 			availableConnections = connections
 
+			// Загружаем улучшенную информацию о соединениях
+			const connectionsInfo = await GetAvailableConnectionsInfo()
+			availableConnectionsInfo = connectionsInfo
+
 			// Загружаем NPCs для текущего Point
 			const npcs = await GetNPCsForCurrentPoint()
 			currentPointNPCs = npcs
@@ -122,6 +140,7 @@
 			// Не показываем ошибку пользователю, просто логируем
 			currentPoint = null
 			availableConnections = []
+			availableConnectionsInfo = []
 			currentPointNPCs = []
 		}
 	}
@@ -140,26 +159,27 @@
 	}
 
 	// Функция для получения маршрутов из данной точки
-	function getRoutePreview(pointId: string): string[] {
+	function getRoutePreview(connectionInfo: ConnectionInfo): string[] {
 		if (!currentPoint) return []
 
-		const hierarchy = locationInfo // Используем доступную информацию
+		// Если это переход в другой субкластер - НЕ показываем подсказки
+		if (connectionInfo.is_inter_cluster) {
+			return []
+		}
+
 		const routes: string[] = []
 
-		// Находим точку в доступных соединениях
-		const targetPoint = availableConnections.find(p => p.id === pointId)
-		if (!targetPoint) return []
-
-		// Добавляем прямые соединения этой точки
-		targetPoint.connections.forEach(connectionId => {
-			// Ищем название точки среди всех доступных соединений и текущей точки
+		// Используем connection_names из ConnectionInfo для получения имен соединений
+		connectionInfo.connections.forEach(connectionId => {
+			// НЕ показываем "вернуться" в подсказках (текущую точку)
 			if (connectionId === currentPoint.id) {
-				routes.push(`${currentPoint.name} (вернуться)`)
-			} else {
-				const connectedPoint = availableConnections.find(p => p.id === connectionId)
-				if (connectedPoint) {
-					routes.push(connectedPoint.name)
-				}
+				return
+			}
+
+			// Получаем имя точки из connection_names
+			const pointName = connectionInfo.connection_names[connectionId]
+			if (pointName) {
+				routes.push(pointName)
 			}
 		})
 
@@ -198,6 +218,21 @@
 		}
 	}
 
+	// Функция для форматирования времени
+	function formatTimestamp(timestamp: string): string {
+		try {
+			const date = new Date(timestamp)
+			const day = date.getDate().toString().padStart(2, "0")
+			const month = (date.getMonth() + 1).toString().padStart(2, "0")
+			const hours = date.getHours().toString().padStart(2, "0")
+			const minutes = date.getMinutes().toString().padStart(2, "0")
+			const seconds = date.getSeconds().toString().padStart(2, "0")
+			return `${day}.${month} ${hours}:${minutes}:${seconds}`
+		} catch (e) {
+			return timestamp // Возвращаем оригинал если что-то пошло не так
+		}
+	}
+
 	onMount(() => {
 		loadCurrentLocation()
 	})
@@ -224,7 +259,7 @@
 						</div>
 
 						<div class="location-description">
-							<p>{currentPoint.description}</p>
+							<p>{locationInfo.description}</p>
 						</div>
 					</div>
 
@@ -248,7 +283,7 @@
 												{/if}
 											</span>
 											<span class="interaction-time"
-												>{interaction.timestamp}</span>
+												>{formatTimestamp(interaction.timestamp)}</span>
 										</div>
 										<div class="interaction-content">
 											<div class="interaction-main-content">
@@ -271,28 +306,32 @@
 					</div>
 
 					<!-- Навигация по точкам -->
-					{#if currentPoint && availableConnections.length > 0}
+					{#if currentPoint && availableConnectionsInfo.length > 0}
 						<div class="navigation-section">
 							<!-- <h4>Переходы:</h4> -->
 							<div class="current-point">
 								{currentPoint.name}
-								<!-- <p class="point-description">{currentPoint.description}</p> -->
+								<p class="point-description">{currentPoint.description}</p>
 							</div>
 							<div class="connections-grid">
-								{#each availableConnections as connection}
+								{#each availableConnectionsInfo as connectionInfo}
 									<div class="connection-container">
 										<button
-											class="connection-btn connection-{connection.type}"
-											on:click={() => moveToPoint(connection.id)}
-											title={connection.description}>
-											<div class="connection-name">{connection.name}</div>
-											<div class="connection-type">{connection.type}</div>
+											class="connection-btn connection-{connectionInfo.type}"
+											on:click={() => moveToPoint(connectionInfo.id)}
+											title={connectionInfo.description}>
+											<div class="connection-name">
+												{connectionInfo.display_name}
+											</div>
+											<!-- <div class="connection-type">{connectionInfo.type}</div> -->
 										</button>
-										<div class="route-preview">
-											{#each getRoutePreview(connection.id) as route, index}
-												<div class="route-item">→ {route}</div>
-											{/each}
-										</div>
+										{#if getRoutePreview(connectionInfo).length > 1}
+											<div class="route-preview">
+												{#each getRoutePreview(connectionInfo) as route, index}
+													<div class="route-item">→ {route}</div>
+												{/each}
+											</div>
+										{/if}
 									</div>
 								{/each}
 							</div>
@@ -852,7 +891,7 @@
 		color: #ecf0f1;
 		cursor: pointer;
 		transition: all 0.3s;
-		text-align: left;
+		text-align: center;
 	}
 
 	.connection-btn:hover {

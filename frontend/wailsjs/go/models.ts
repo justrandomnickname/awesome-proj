@@ -108,6 +108,40 @@ export namespace entities {
 		    return a;
 		}
 	}
+	export class ConnectionInfo {
+	    id: string;
+	    name: string;
+	    description: string;
+	    sub_cluster_id: string;
+	    type: string;
+	    connections: string[];
+	    connection_names: Record<string, string>;
+	    npcs: string[];
+	    is_entry_point: boolean;
+	    display_name: string;
+	    is_inter_cluster: boolean;
+	    target_sub_cluster: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ConnectionInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.description = source["description"];
+	        this.sub_cluster_id = source["sub_cluster_id"];
+	        this.type = source["type"];
+	        this.connections = source["connections"];
+	        this.connection_names = source["connection_names"];
+	        this.npcs = source["npcs"];
+	        this.is_entry_point = source["is_entry_point"];
+	        this.display_name = source["display_name"];
+	        this.is_inter_cluster = source["is_inter_cluster"];
+	        this.target_sub_cluster = source["target_sub_cluster"];
+	    }
+	}
 	export class Interaction {
 	    id: string;
 	    type: string;

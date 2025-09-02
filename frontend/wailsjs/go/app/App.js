@@ -10,6 +10,10 @@ export function GetAvailableConnections() {
   return window['go']['app']['App']['GetAvailableConnections']();
 }
 
+export function GetAvailableConnectionsInfo() {
+  return window['go']['app']['App']['GetAvailableConnectionsInfo']();
+}
+
 export function GetCurrentLocation() {
   return window['go']['app']['App']['GetCurrentLocation']();
 }

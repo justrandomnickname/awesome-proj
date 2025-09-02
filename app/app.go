@@ -58,6 +58,10 @@ func (a *App) GetAvailableConnections() ([]*entities.Point, error) {
 	return a.gameEngine.GetAvailableConnections()
 }
 
+func (a *App) GetAvailableConnectionsInfo() ([]*entities.ConnectionInfo, error) {
+	return a.gameEngine.GetAvailableConnectionsInfo()
+}
+
 func (a *App) GetNPCsForCurrentPoint() ([]*entities.NPC, error) {
 	return a.gameEngine.GetNPCsForCurrentPoint()
 }
