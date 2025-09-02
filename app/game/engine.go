@@ -147,8 +147,44 @@ func (g *GameEngine) NewGame(seed int64) error {
 	worldService := services.NewWorldGenerationService()
 	g.currentWorld = worldService.GenerateWorld("Default World", seed)
 	g.gameState = NewGameState(seed)
+
+	// Инициализируем начальный point
+	err := g.initializeStartingPoint()
+	if err != nil {
+		return fmt.Errorf("failed to initialize starting point: %v", err)
+	}
+
 	fmt.Println("[GameEngine] New game started successfully")
 	return nil
+}
+
+func (g *GameEngine) initializeStartingPoint() error {
+	hierarchy := g.currentWorld.GetHierarchy()
+	if hierarchy == nil {
+		return fmt.Errorf("hierarchy not available")
+	}
+
+	// Пытаемся найти указанную точку
+	currentPointID := g.gameState.GetCurrentPointID()
+	point := hierarchy.FindPoint(currentPointID)
+
+	if point != nil {
+		return nil // Точка найдена, все в порядке
+	}
+
+	// Если указанная точка не найдена, ищем первую entry point
+	for _, cluster := range hierarchy.Clusters {
+		for _, subCluster := range cluster.SubClusters {
+			for _, entryPointID := range subCluster.EntryPoints {
+				if entryPoint := hierarchy.FindPoint(entryPointID); entryPoint != nil {
+					g.gameState.SetCurrentPointID(entryPointID)
+					return nil
+				}
+			}
+		}
+	}
+
+	return fmt.Errorf("no entry points found in hierarchy")
 }
 
 func (g *GameEngine) PerformPlayerAction(actionText string) error {
@@ -175,4 +211,110 @@ func (g *GameEngine) PerformPlayerAction(actionText string) error {
 	locationResponse := g.interactionService.GenerateResponseToAction(playerAction, location.Name, npcCount)
 	g.gameState.AddInteractionToCurrentLocation(locationResponse)
 	return nil
+}
+func (g *GameEngine) GetLocationHierarchy() (*entities.LocationHierarchy, error) {
+	if g.currentWorld == nil {
+		return nil, fmt.Errorf("world not initialized")
+	}
+	return g.currentWorld.GetHierarchy(), nil
+}
+func (g *GameEngine) GetCurrentPoint() (*entities.Point, error) {
+	if g.gameState == nil {
+		return nil, fmt.Errorf("game state not initialized")
+	}
+
+	hierarchy := g.currentWorld.GetHierarchy()
+	if hierarchy == nil {
+		return nil, fmt.Errorf("hierarchy not available")
+	}
+
+	currentPointID := g.gameState.GetCurrentPointID()
+	if currentPointID == "" {
+		// Если CurrentPointID не установлен, инициализируем его
+		err := g.initializeStartingPoint()
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize starting point: %v", err)
+		}
+		currentPointID = g.gameState.GetCurrentPointID()
+	}
+
+	point := hierarchy.FindPoint(currentPointID)
+	if point == nil {
+		// Если точка не найдена, пересоздаем иерархию и инициализируем заново
+		err := g.reinitializeHierarchy()
+		if err != nil {
+			return nil, fmt.Errorf("failed to reinitialize hierarchy: %v", err)
+		}
+		currentPointID = g.gameState.GetCurrentPointID()
+		hierarchy = g.currentWorld.GetHierarchy() // Получаем новую иерархию
+		point = hierarchy.FindPoint(currentPointID)
+		if point == nil {
+			return nil, fmt.Errorf("current point %s not found even after reinitialization", currentPointID)
+		}
+	}
+
+	return point, nil
+}
+func (g *GameEngine) reinitializeHierarchy() error {
+	// Пересоздаем иерархию
+	worldService := services.NewWorldGenerationService()
+	newWorld := worldService.GenerateWorld("Default World", g.gameState.GetWorldSeed())
+	g.currentWorld = newWorld
+
+	// Инициализируем стартовую точку
+	return g.initializeStartingPoint()
+}
+func (g *GameEngine) MoveToPoint(pointID string) error {
+	if g.gameState == nil {
+		return fmt.Errorf("game state not initialized")
+	}
+
+	hierarchy := g.currentWorld.GetHierarchy()
+	if hierarchy == nil {
+		return fmt.Errorf("hierarchy not available")
+	}
+
+	targetPoint := hierarchy.FindPoint(pointID)
+	if targetPoint == nil {
+		return fmt.Errorf("point %s not found", pointID)
+	}
+
+	currentPoint, err := g.GetCurrentPoint()
+	if err != nil {
+		return fmt.Errorf("failed to get current point: %v", err)
+	}
+
+	// Проверяем, что можно перейти к этой точке
+	canMove := false
+	for _, connectionID := range currentPoint.Connections {
+		if connectionID == pointID {
+			canMove = true
+			break
+		}
+	}
+
+	if !canMove {
+		return fmt.Errorf("cannot move to point %s from current location", pointID)
+	}
+
+	g.gameState.SetCurrentPointID(pointID)
+	return nil
+}
+func (g *GameEngine) GetAvailableConnections() ([]*entities.Point, error) {
+	currentPoint, err := g.GetCurrentPoint()
+	if err != nil {
+		return nil, err
+	}
+
+	hierarchy := g.currentWorld.GetHierarchy()
+	connections := make([]*entities.Point, 0, len(currentPoint.Connections))
+
+	for _, connectionID := range currentPoint.Connections {
+		point := hierarchy.FindPoint(connectionID)
+		if point != nil {
+			connections = append(connections, point)
+		}
+	}
+
+	return connections, nil
 }

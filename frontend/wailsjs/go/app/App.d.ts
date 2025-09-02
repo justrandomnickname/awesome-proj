@@ -4,13 +4,21 @@ import {entities} from '../models';
 
 export function DeleteSave(arg1:string):Promise<void>;
 
+export function GetAvailableConnections():Promise<Array<entities.Point>>;
+
 export function GetCurrentLocation():Promise<entities.Location>;
+
+export function GetCurrentPoint():Promise<entities.Point>;
+
+export function GetLocationHierarchy():Promise<entities.LocationHierarchy>;
 
 export function GetSavesList():Promise<Array<entities.SaveInfo>>;
 
 export function Greet(arg1:string):Promise<string>;
 
 export function LoadGame(arg1:string):Promise<void>;
+
+export function MoveToPoint(arg1:string):Promise<void>;
 
 export function NewGame(arg1:number):Promise<void>;
 

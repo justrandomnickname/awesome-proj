@@ -9,6 +9,7 @@ type World struct {
 	Name      string                        `json:"name"`
 	Locations map[string]*entities.Location `json:"locations"`
 	NPCs      map[string]*entities.NPC      `json:"npcs"`
+	Hierarchy *entities.LocationHierarchy   `json:"hierarchy,omitempty"`
 	Seed      int64                         `json:"seed"`
 }
 
@@ -20,6 +21,7 @@ func NewEmptyWorld(name string, seed int64) *World {
 		Name:      name,
 		Locations: make(map[string]*entities.Location),
 		NPCs:      make(map[string]*entities.NPC),
+		Hierarchy: entities.NewLocationHierarchy(),
 		Seed:      seed,
 	}
 }
@@ -34,4 +36,12 @@ func (w *World) AddLocation(id string, location *entities.Location) {
 
 func (w *World) AddNPC(npc *entities.NPC) {
 	w.NPCs[npc.ID] = npc
+}
+
+func (w *World) SetHierarchy(hierarchy *entities.LocationHierarchy) {
+	w.Hierarchy = hierarchy
+}
+
+func (w *World) GetHierarchy() *entities.LocationHierarchy {
+	return w.Hierarchy
 }

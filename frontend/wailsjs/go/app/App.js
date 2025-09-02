@@ -6,8 +6,20 @@ export function DeleteSave(arg1) {
   return window['go']['app']['App']['DeleteSave'](arg1);
 }
 
+export function GetAvailableConnections() {
+  return window['go']['app']['App']['GetAvailableConnections']();
+}
+
 export function GetCurrentLocation() {
   return window['go']['app']['App']['GetCurrentLocation']();
+}
+
+export function GetCurrentPoint() {
+  return window['go']['app']['App']['GetCurrentPoint']();
+}
+
+export function GetLocationHierarchy() {
+  return window['go']['app']['App']['GetLocationHierarchy']();
 }
 
 export function GetSavesList() {
@@ -20,6 +32,10 @@ export function Greet(arg1) {
 
 export function LoadGame(arg1) {
   return window['go']['app']['App']['LoadGame'](arg1);
+}
+
+export function MoveToPoint(arg1) {
+  return window['go']['app']['App']['MoveToPoint'](arg1);
 }
 
 export function NewGame(arg1) {

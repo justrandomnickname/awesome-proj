@@ -1,14 +1,17 @@
 package app
+
 import (
-	"context"
-	"fmt"
 	"awesome-proj/app/domain/entities"
 	"awesome-proj/app/game"
+	"context"
+	"fmt"
 )
+
 type App struct {
 	ctx        context.Context
 	gameEngine *game.GameEngine
 }
+
 func NewApp() *App {
 	return &App{
 		gameEngine: game.NewGameEngine(),
@@ -41,4 +44,16 @@ func (a *App) NewGame(seed int64) error {
 }
 func (a *App) PerformPlayerAction(actionText string) error {
 	return a.gameEngine.PerformPlayerAction(actionText)
+}
+func (a *App) GetLocationHierarchy() (*entities.LocationHierarchy, error) {
+	return a.gameEngine.GetLocationHierarchy()
+}
+func (a *App) GetCurrentPoint() (*entities.Point, error) {
+	return a.gameEngine.GetCurrentPoint()
+}
+func (a *App) MoveToPoint(pointID string) error {
+	return a.gameEngine.MoveToPoint(pointID)
+}
+func (a *App) GetAvailableConnections() ([]*entities.Point, error) {
+	return a.gameEngine.GetAvailableConnections()
 }
