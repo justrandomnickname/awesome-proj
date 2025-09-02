@@ -4,6 +4,8 @@ import {entities} from '../models';
 
 export function DeleteSave(arg1:string):Promise<void>;
 
+export function GenerateSubclusterDescriptionPrompt():Promise<string>;
+
 export function GetAvailableConnections():Promise<Array<entities.Point>>;
 
 export function GetAvailableConnectionsInfo():Promise<Array<entities.ConnectionInfo>>;

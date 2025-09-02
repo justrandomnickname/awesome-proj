@@ -6,6 +6,10 @@ export function DeleteSave(arg1) {
   return window['go']['app']['App']['DeleteSave'](arg1);
 }
 
+export function GenerateSubclusterDescriptionPrompt() {
+  return window['go']['app']['App']['GenerateSubclusterDescriptionPrompt']();
+}
+
 export function GetAvailableConnections() {
   return window['go']['app']['App']['GetAvailableConnections']();
 }

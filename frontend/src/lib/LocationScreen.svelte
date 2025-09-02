@@ -6,8 +6,10 @@
 		GetCurrentPoint,
 		GetAvailableConnections,
 		GetAvailableConnectionsInfo,
+		GetLocationHierarchy,
 		MoveToPoint,
 		GetNPCsForCurrentPoint,
+		GenerateSubclusterDescriptionPrompt,
 	} from "../../wailsjs/go/app/App.js"
 	import SaveMenu from "./SaveMenu.svelte"
 
@@ -233,6 +235,27 @@
 		}
 	}
 
+	// Функция для генерации промпта для ИИ
+	async function generateAIPrompt() {
+		try {
+			const prompt = await GenerateSubclusterDescriptionPrompt()
+			console.log("=== ПРОМПТ ДЛЯ ГЕНЕРАЦИИ ОПИСАНИЙ СУБКЛАСТЕРА ===")
+			console.log(prompt)
+			console.log("=== КОНЕЦ ПРОМПТА ===")
+
+			alert("Промпт для описаний субкластера сгенерирован! Проверьте консоль терминала.")
+		} catch (err) {
+			console.error("Ошибка генерации промпта:", err)
+			alert("Ошибка генерации промпта: " + err)
+		}
+	}
+
+	// Публичная функция для обновления состояния игры
+	export function refreshGameState() {
+		console.log("Refreshing game state after load...")
+		loadCurrentLocation()
+	}
+
 	onMount(() => {
 		loadCurrentLocation()
 	})
@@ -250,7 +273,7 @@
 				<div class="interactions-content">
 					<div class="location-info">
 						<div class="location-header">
-							<h3 class="location-name">{locationInfo.name}</h3>
+							<h3 class="location-name">{currentPoint.name}</h3>
 							<div>
 								<span class="location-id">ID: {currentPoint.id}</span>
 								<span class="point-type point-type-{currentPoint.type}"
@@ -259,7 +282,7 @@
 						</div>
 
 						<div class="location-description">
-							<p>{locationInfo.description}</p>
+							<p>{currentPoint.description}</p>
 						</div>
 					</div>
 
@@ -369,6 +392,9 @@
 				<div class="sidebar-section">
 					<button class="save-menu-btn" on:click={() => saveMenu.openMenu()}>
 						💾 Сохранения
+					</button>
+					<button class="ai-prompt-btn" on:click={generateAIPrompt}>
+						🤖 Генерировать промпт ИИ
 					</button>
 				</div>
 
@@ -530,10 +556,27 @@
 		cursor: pointer;
 		font-size: 14px;
 		font-weight: bold;
+		margin-bottom: 10px;
 	}
 
 	.save-menu-btn:hover {
 		background: #2980b9;
+	}
+
+	.ai-prompt-btn {
+		width: 100%;
+		background: #9b59b6;
+		color: white;
+		border: none;
+		padding: 12px 15px;
+		border-radius: 6px;
+		cursor: pointer;
+		font-size: 14px;
+		font-weight: bold;
+	}
+
+	.ai-prompt-btn:hover {
+		background: #8e44ad;
 	}
 
 	.npcs-title {

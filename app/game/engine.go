@@ -35,6 +35,13 @@ func NewGameEngine() *GameEngine {
 func initializeGameState(saveService *services.SaveService) (*aggregates.World, *GameState) {
 	world, gameState, err := tryLoadExistingSave(saveService)
 	if err != nil {
+		// Если нет сохранений или они битые, создаем новую игру
+		// НО только если это действительно отсутствие сохранений
+		if saveService.HasAnySaves() {
+			// Если сохранения есть, но они битые - это критическая ошибка
+			panic(fmt.Sprintf("Failed to load existing save: %v. This indicates corrupted save data.", err))
+		}
+		// Если сохранений нет вообще - создаем новую игру
 		return createNewGame()
 	}
 	return world, gameState
@@ -49,6 +56,7 @@ func tryLoadExistingSave(saveService *services.SaveService) (*aggregates.World, 
 	if err != nil {
 		return nil, nil, err
 	}
+
 	return loadedWorld, gameState, nil
 }
 
@@ -126,6 +134,7 @@ func (g *GameEngine) LoadGame(filename string) error {
 	}
 
 	g.currentWorld = world
+
 	gameState, err := deserializeGameState(loadedGameState)
 	if err != nil {
 		return fmt.Errorf("invalid game state format in save file: %v", err)
@@ -154,7 +163,6 @@ func (g *GameEngine) NewGame(seed int64) error {
 		return fmt.Errorf("failed to initialize starting point: %v", err)
 	}
 
-	fmt.Println("[GameEngine] New game started successfully")
 	return nil
 }
 
@@ -251,30 +259,12 @@ func (g *GameEngine) GetCurrentPoint() (*entities.Point, error) {
 
 	point := hierarchy.FindPoint(currentPointID)
 	if point == nil {
-		// Если точка не найдена, пересоздаем иерархию и инициализируем заново
-		err := g.reinitializeHierarchy()
-		if err != nil {
-			return nil, fmt.Errorf("failed to reinitialize hierarchy: %v", err)
-		}
-		currentPointID = g.gameState.GetCurrentPointID()
-		hierarchy = g.currentWorld.GetHierarchy() // Получаем новую иерархию
-		point = hierarchy.FindPoint(currentPointID)
-		if point == nil {
-			return nil, fmt.Errorf("current point %s not found even after reinitialization", currentPointID)
-		}
+		return nil, fmt.Errorf("current point %s not found in hierarchy", currentPointID)
 	}
 
 	return point, nil
 }
-func (g *GameEngine) reinitializeHierarchy() error {
-	// Пересоздаем иерархию
-	worldService := services.NewWorldGenerationService()
-	newWorld := worldService.GenerateWorld("Default World", g.gameState.GetWorldSeed())
-	g.currentWorld = newWorld
 
-	// Инициализируем стартовую точку
-	return g.initializeStartingPoint()
-}
 func (g *GameEngine) MoveToPoint(pointID string) error {
 	if g.gameState == nil {
 		return fmt.Errorf("game state not initialized")

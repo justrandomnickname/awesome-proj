@@ -2,19 +2,23 @@ package app
 
 import (
 	"awesome-proj/app/domain/entities"
+	"awesome-proj/app/domain/services/prompts"
 	"awesome-proj/app/game"
 	"context"
 	"fmt"
 )
 
 type App struct {
-	ctx        context.Context
-	gameEngine *game.GameEngine
+	ctx                                context.Context
+	gameEngine                         *game.GameEngine
+	subclusterStaticDescriptionService *prompts.SubclusterStaticDescriptionService
 }
 
 func NewApp() *App {
+	gameEngine := game.NewGameEngine()
 	return &App{
-		gameEngine: game.NewGameEngine(),
+		gameEngine:                         gameEngine,
+		subclusterStaticDescriptionService: prompts.NewSubclusterStaticDescriptionService(gameEngine),
 	}
 }
 func (a *App) Startup(ctx context.Context) {
@@ -64,4 +68,8 @@ func (a *App) GetAvailableConnectionsInfo() ([]*entities.ConnectionInfo, error) 
 
 func (a *App) GetNPCsForCurrentPoint() ([]*entities.NPC, error) {
 	return a.gameEngine.GetNPCsForCurrentPoint()
+}
+
+func (a *App) GenerateSubclusterDescriptionPrompt() (string, error) {
+	return a.subclusterStaticDescriptionService.GenerateAndPrintSubclusterDescriptionPrompt(a.ctx)
 }

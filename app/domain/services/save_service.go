@@ -1,17 +1,20 @@
 package services
+
 import (
+	"awesome-proj/app/domain/aggregates"
+	"awesome-proj/app/domain/entities"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
-	"awesome-proj/app/domain/aggregates"
-	"awesome-proj/app/domain/entities"
 )
+
 type SaveService struct {
 	savesDir string
 }
+
 func NewSaveService() *SaveService {
 	savesDir := filepath.Join(".", "saves")
 	if err := os.MkdirAll(savesDir, 0755); err != nil {
@@ -94,6 +97,15 @@ func deserializeWorldFromMap(worldData interface{}) (*aggregates.World, error) {
 			}
 		}
 	}
+
+	// Загружаем иерархию из сохранения
+	if hierarchyData, ok := worldMap["hierarchy"].(map[string]interface{}); ok {
+		hierarchy := entities.NewLocationHierarchyFromMap(hierarchyData)
+		if hierarchy != nil {
+			world.SetHierarchy(hierarchy)
+		}
+	}
+
 	return world, nil
 }
 func (s *SaveService) GetSavesList() ([]entities.SaveInfo, error) {
@@ -121,6 +133,16 @@ func (s *SaveService) GetSavesList() ([]entities.SaveInfo, error) {
 	}
 	return saves, nil
 }
+
+// HasAnySaves проверяет есть ли какие-либо файлы сохранений
+func (s *SaveService) HasAnySaves() bool {
+	saves, err := s.GetSavesList()
+	if err != nil {
+		return false
+	}
+	return len(saves) > 0
+}
+
 func (s *SaveService) DeleteSave(filename string) error {
 	filePath := filepath.Join(s.savesDir, filename)
 	if err := os.Remove(filePath); err != nil {

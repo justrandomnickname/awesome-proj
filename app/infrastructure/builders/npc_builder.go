@@ -148,6 +148,6 @@ func (nb *NPCBuilder) GenerateInnkeeper(pointID string) *entities.NPC {
 		Name:        "Боб Трактирщик",
 		Race:        "human",
 		LocationID:  pointID,
-		Description: "Дружелюбный хозяин таверны с круглым животом и добрыми глазами",
+		Description: "NOT_SPECIFIED",
 	}
 }
