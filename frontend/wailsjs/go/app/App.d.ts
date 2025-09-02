@@ -12,6 +12,8 @@ export function GetCurrentPoint():Promise<entities.Point>;
 
 export function GetLocationHierarchy():Promise<entities.LocationHierarchy>;
 
+export function GetNPCsForCurrentPoint():Promise<Array<entities.NPC>>;
+
 export function GetSavesList():Promise<Array<entities.SaveInfo>>;
 
 export function Greet(arg1:string):Promise<string>;

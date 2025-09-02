@@ -187,7 +187,7 @@ func (g *GameEngine) initializeStartingPoint() error {
 	return fmt.Errorf("no entry points found in hierarchy")
 }
 
-func (g *GameEngine) PerformPlayerAction(actionText string) error {
+func (g *GameEngine) PerformPlayerInteraction(actionText string, interactionType entities.InteractionType, additionalContent string) error {
 	if g.gameState == nil {
 		return fmt.Errorf("game state not initialized")
 	}
@@ -199,11 +199,12 @@ func (g *GameEngine) PerformPlayerAction(actionText string) error {
 	}
 
 	playerAction := entities.Interaction{
-		ID:         fmt.Sprintf("action_%d", time.Now().UnixNano()),
-		Type:       entities.InteractionTypePlayerAction,
-		Content:    actionText,
-		LocationID: currentLocationID,
-		Timestamp:  time.Now(),
+		ID:                fmt.Sprintf("action_%d", time.Now().UnixNano()),
+		Type:              interactionType,
+		Content:           actionText,
+		LocationID:        currentLocationID,
+		AdditionalContent: additionalContent,
+		Timestamp:         time.Now(),
 	}
 
 	g.gameState.AddInteractionToCurrentLocation(playerAction)
@@ -212,6 +213,21 @@ func (g *GameEngine) PerformPlayerAction(actionText string) error {
 	g.gameState.AddInteractionToCurrentLocation(locationResponse)
 	return nil
 }
+
+func (g *GameEngine) PerformPlayerAction(actionText string) error {
+	return g.PerformPlayerInteraction(actionText, entities.InteractionTypePlayerAction, "")
+}
+
+func (g *GameEngine) PerformPlayerMovement(actionText string) error {
+	currentPoint, err := g.GetCurrentPoint()
+	if err != nil {
+		return fmt.Errorf("failed to get current point: %v", err)
+	}
+
+	additionalContent := fmt.Sprintf("%s", currentPoint.Description)
+	return g.PerformPlayerInteraction(actionText, entities.InteractionTypePlayerMovement, additionalContent)
+}
+
 func (g *GameEngine) GetLocationHierarchy() (*entities.LocationHierarchy, error) {
 	if g.currentWorld == nil {
 		return nil, fmt.Errorf("world not initialized")
@@ -284,8 +300,9 @@ func (g *GameEngine) MoveToPoint(pointID string) error {
 		return fmt.Errorf("failed to get current point: %v", err)
 	}
 
-	// Проверяем, что можно перейти к этой точке
 	canMove := false
+
+	//TODO: переделать наа slices.Contains
 	for _, connectionID := range currentPoint.Connections {
 		if connectionID == pointID {
 			canMove = true
@@ -297,6 +314,7 @@ func (g *GameEngine) MoveToPoint(pointID string) error {
 		return fmt.Errorf("cannot move to point %s from current location", pointID)
 	}
 
+	g.PerformPlayerMovement(fmt.Sprintf("Персонаж перешел из %s в %s", currentPoint.Name, targetPoint.Name))
 	g.gameState.SetCurrentPointID(pointID)
 	return nil
 }
@@ -317,4 +335,20 @@ func (g *GameEngine) GetAvailableConnections() ([]*entities.Point, error) {
 	}
 
 	return connections, nil
+}
+
+func (g *GameEngine) GetNPCsForCurrentPoint() ([]*entities.NPC, error) {
+	currentPoint, err := g.GetCurrentPoint()
+	if err != nil {
+		return nil, err
+	}
+
+	npcs := make([]*entities.NPC, 0, len(currentPoint.NPCs))
+	for _, npcID := range currentPoint.NPCs {
+		if npc, exists := g.currentWorld.NPCs[npcID]; exists {
+			npcs = append(npcs, npc)
+		}
+	}
+
+	return npcs, nil
 }

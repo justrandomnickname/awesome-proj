@@ -22,6 +22,10 @@ export function GetLocationHierarchy() {
   return window['go']['app']['App']['GetLocationHierarchy']();
 }
 
+export function GetNPCsForCurrentPoint() {
+  return window['go']['app']['App']['GetNPCsForCurrentPoint']();
+}
+
 export function GetSavesList() {
   return window['go']['app']['App']['GetSavesList']();
 }

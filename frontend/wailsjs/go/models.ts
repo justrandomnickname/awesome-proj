@@ -112,6 +112,7 @@ export namespace entities {
 	    id: string;
 	    type: string;
 	    content: string;
+	    additional_content?: string;
 	    location_id: string;
 	    // Go type: time
 	    timestamp: any;
@@ -125,6 +126,7 @@ export namespace entities {
 	        this.id = source["id"];
 	        this.type = source["type"];
 	        this.content = source["content"];
+	        this.additional_content = source["additional_content"];
 	        this.location_id = source["location_id"];
 	        this.timestamp = this.convertValues(source["timestamp"], null);
 	    }

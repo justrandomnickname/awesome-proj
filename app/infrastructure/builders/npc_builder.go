@@ -72,6 +72,19 @@ func (nb *NPCBuilder) GenerateNPCsForLocation(location *entities.Location, rng *
 	return npcs
 }
 
+func (nb *NPCBuilder) GenerateNPCsForPoint(point *entities.Point, clusterType string, rng *rand.Rand) []*entities.NPC {
+	// Для каждого поинта генерируем 1-3 NPCs
+	npcCount := 1 + rng.Intn(3)
+	npcs := make([]*entities.NPC, 0, npcCount)
+
+	for i := 0; i < npcCount; i++ {
+		npc := nb.generateSingleNPCForPoint(point, clusterType, rng, i+1)
+		npcs = append(npcs, npc)
+		point.NPCs = append(point.NPCs, npc.ID)
+	}
+	return npcs
+}
+
 func (nb *NPCBuilder) generateSingleNPC(location *entities.Location, rng *rand.Rand, npcIndex int) *entities.NPC {
 	race := nb.selectRaceForLocation(location.Type, rng)
 	name := nb.generateNameForRace(race, rng)
@@ -81,6 +94,19 @@ func (nb *NPCBuilder) generateSingleNPC(location *entities.Location, rng *rand.R
 		Name:        name,
 		Race:        race,
 		LocationID:  location.ID,
+		Description: description,
+	}
+}
+
+func (nb *NPCBuilder) generateSingleNPCForPoint(point *entities.Point, clusterType string, rng *rand.Rand, npcIndex int) *entities.NPC {
+	race := nb.selectRaceForLocation(clusterType, rng)
+	name := nb.generateNameForRace(race, rng)
+	description := nb.generateDescriptionForRace(race, rng)
+	return &entities.NPC{
+		ID:          fmt.Sprintf("%s_npc_%d", point.ID, npcIndex),
+		Name:        name,
+		Race:        race,
+		LocationID:  point.ID, // Используем Point ID как LocationID
 		Description: description,
 	}
 }

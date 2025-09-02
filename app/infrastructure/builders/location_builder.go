@@ -175,6 +175,16 @@ func (lb *LocationBuilder) GenerateLocationHierarchy(rng *rand.Rand) *entities.L
 	return hierarchy
 }
 
+func (lb *LocationBuilder) GenerateLocationHierarchyWithNPCs(world WorldInterface, rng *rand.Rand) *entities.LocationHierarchy {
+	hierarchy := entities.NewLocationHierarchy()
+
+	template := lb.clusterTemplates[rng.Intn(len(lb.clusterTemplates))]
+	cluster := lb.buildClusterFromTemplateWithNPCs(template, "start", rng, world)
+	hierarchy.AddCluster(cluster)
+
+	return hierarchy
+}
+
 func (lb *LocationBuilder) buildClusterFromTemplate(template ClusterTemplate, clusterID string, rng *rand.Rand) *entities.Cluster {
 	cluster := &entities.Cluster{
 		ID:          clusterID,
@@ -186,6 +196,26 @@ func (lb *LocationBuilder) buildClusterFromTemplate(template ClusterTemplate, cl
 
 	subClusterID := fmt.Sprintf("%s_sub_1", clusterID)
 	subCluster := lb.buildSubClusterFromTemplate(template.SubCluster, subClusterID, clusterID, rng)
+	cluster.AddSubCluster(subCluster)
+
+	if len(subCluster.EntryPoints) > 0 {
+		cluster.MainPoint = subCluster.EntryPoints[0]
+	}
+
+	return cluster
+}
+
+func (lb *LocationBuilder) buildClusterFromTemplateWithNPCs(template ClusterTemplate, clusterID string, rng *rand.Rand, world WorldInterface) *entities.Cluster {
+	cluster := &entities.Cluster{
+		ID:          clusterID,
+		Name:        template.Name,
+		Description: template.Description,
+		Type:        template.Type,
+		SubClusters: make(map[string]*entities.SubCluster),
+	}
+
+	subClusterID := fmt.Sprintf("%s_sub_1", clusterID)
+	subCluster := lb.buildSubClusterFromTemplateWithNPCs(template.SubCluster, subClusterID, clusterID, template.Type, rng, world)
 	cluster.AddSubCluster(subCluster)
 
 	if len(subCluster.EntryPoints) > 0 {
@@ -218,6 +248,42 @@ func (lb *LocationBuilder) buildSubClusterFromTemplate(template SubClusterTempla
 			IsEntryPoint: pointTemplate.IsEntryPoint,
 		}
 		subCluster.AddPoint(point)
+	}
+
+	lb.connectPointsInSubCluster(subCluster)
+
+	return subCluster
+}
+
+func (lb *LocationBuilder) buildSubClusterFromTemplateWithNPCs(template SubClusterTemplate, subClusterID, clusterID, clusterType string, rng *rand.Rand, world WorldInterface) *entities.SubCluster {
+	subCluster := &entities.SubCluster{
+		ID:          subClusterID,
+		Name:        template.Name,
+		Description: template.Description,
+		ClusterID:   clusterID,
+		EntryPoints: make([]string, 0),
+		Points:      make(map[string]*entities.Point),
+	}
+
+	for i, pointTemplate := range template.Points {
+		pointID := fmt.Sprintf("%s_point_%d", subClusterID, i+1)
+		point := &entities.Point{
+			ID:           pointID,
+			Name:         pointTemplate.Name,
+			Description:  pointTemplate.Description,
+			SubClusterID: subClusterID,
+			Type:         pointTemplate.Type,
+			Connections:  make([]string, 0),
+			NPCs:         make([]string, 0),
+			IsEntryPoint: pointTemplate.IsEntryPoint,
+		}
+		subCluster.AddPoint(point)
+
+		// Генерируем NPCs для каждого Point
+		npcs := lb.npcBuilder.GenerateNPCsForPoint(point, clusterType, rng)
+		for _, npc := range npcs {
+			world.AddNPC(npc)
+		}
 	}
 
 	lb.connectPointsInSubCluster(subCluster)
