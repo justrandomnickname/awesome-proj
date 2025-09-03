@@ -12,8 +12,8 @@ type Location struct {
 	Interactions []Interaction     `json:"interactions,omitempty"`
 }
 
-type LocationState struct {
-	LocationID   string        `json:"location_id"`
+type PointState struct {
+	PointID      string        `json:"point_id"`
 	Interactions []Interaction `json:"interactions"`
 	FirstVisit   bool          `json:"first_visit"`
 }
@@ -22,9 +22,10 @@ func (l *Location) ToFrontendFormat(npcs []*NPC, interactions []Interaction) {
 	l.NPCsDetailed = npcs
 	l.Interactions = interactions
 }
-func (ls *LocationState) GetPlayerActions() []Interaction {
+
+func (ps *PointState) GetPlayerActions() []Interaction {
 	var actions []Interaction
-	for _, interaction := range ls.Interactions {
+	for _, interaction := range ps.Interactions {
 		if interaction.Type == InteractionTypePlayerAction {
 			actions = append(actions, interaction)
 		}
@@ -33,9 +34,9 @@ func (ls *LocationState) GetPlayerActions() []Interaction {
 	return actions
 }
 
-func (ls *LocationState) GetLocationResponses() []Interaction {
+func (ps *PointState) GetLocationResponses() []Interaction {
 	var responses []Interaction
-	for _, interaction := range ls.Interactions {
+	for _, interaction := range ps.Interactions {
 		if interaction.Type == InteractionTypeLocationResponse {
 			responses = append(responses, interaction)
 		}
@@ -44,8 +45,8 @@ func (ls *LocationState) GetLocationResponses() []Interaction {
 	return responses
 }
 
-func (ls *LocationState) AddInteraction(interaction Interaction) {
-	ls.Interactions = append(ls.Interactions, interaction)
+func (ps *PointState) AddInteraction(interaction Interaction) {
+	ps.Interactions = append(ps.Interactions, interaction)
 }
 
 func NewLocationFromMap(locationData interface{}) *Location {

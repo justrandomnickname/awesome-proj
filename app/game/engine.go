@@ -86,39 +86,6 @@ func (g *GameEngine) Initialize(ctx context.Context) error {
 	return nil
 }
 
-func (g *GameEngine) GetCurrentLocationInfo() (*entities.Location, error) {
-	if g.gameState == nil {
-		return nil, fmt.Errorf("game state not initialized")
-	}
-
-	currentLocationID := g.gameState.GetCurrentLocationID()
-	location := g.currentWorld.Locations[currentLocationID]
-	if location == nil {
-		return nil, fmt.Errorf("location %s not found", currentLocationID)
-	}
-
-	npcs := make([]*entities.NPC, 0)
-	for _, npcID := range location.NPCs {
-		if npc, exists := g.currentWorld.NPCs[npcID]; exists {
-			npcs = append(npcs, npc)
-		}
-	}
-
-	locationState := g.gameState.GetLocationState(currentLocationID)
-	if locationState.FirstVisit && len(locationState.Interactions) == 0 {
-		initialState := g.interactionService.GenerateInitialLocationState(
-			currentLocationID,
-			location.Name,
-			len(npcs),
-		)
-		g.gameState.AddInteractionToCurrentLocation(initialState)
-	}
-
-	frontendLocation := *location
-	frontendLocation.ToFrontendFormat(npcs, locationState.Interactions)
-	return &frontendLocation, nil
-}
-
 func (g *GameEngine) IsRunning() bool {
 	return g.isRunning
 }
@@ -200,25 +167,24 @@ func (g *GameEngine) PerformPlayerInteraction(actionText string, interactionType
 		return fmt.Errorf("game state not initialized")
 	}
 
-	currentLocationID := g.gameState.GetCurrentLocationID()
-	location := g.currentWorld.Locations[currentLocationID]
-	if location == nil {
-		return fmt.Errorf("location %s not found", currentLocationID)
+	currentPoint, err := g.GetCurrentPoint()
+	if currentPoint == nil {
+		return fmt.Errorf("current point not found: %v", err)
 	}
 
 	playerAction := entities.Interaction{
 		ID:                fmt.Sprintf("action_%d", time.Now().UnixNano()),
 		Type:              interactionType,
 		Content:           actionText,
-		LocationID:        currentLocationID,
+		LocationID:        currentPoint.ID, // Используем Point ID вместо Location ID
 		AdditionalContent: additionalContent,
 		Timestamp:         time.Now(),
 	}
 
-	g.gameState.AddInteractionToCurrentLocation(playerAction)
-	npcCount := len(location.NPCs)
-	locationResponse := g.interactionService.GenerateResponseToAction(playerAction, location.Name, npcCount)
-	g.gameState.AddInteractionToCurrentLocation(locationResponse)
+	g.gameState.AddInteractionToCurrentPoint(playerAction)
+	npcCount := len(currentPoint.NPCs)
+	locationResponse := g.interactionService.GenerateResponseToAction(playerAction, currentPoint.Name, npcCount)
+	g.gameState.AddInteractionToCurrentPoint(locationResponse)
 	return nil
 }
 
@@ -395,4 +361,18 @@ func (g *GameEngine) GetNPCsForCurrentPoint() ([]*entities.NPC, error) {
 	}
 
 	return npcs, nil
+}
+
+func (g *GameEngine) GetInteractionsForCurrentPoint() ([]entities.Interaction, error) {
+	if g.gameState == nil {
+		return nil, fmt.Errorf("game state not initialized")
+	}
+
+	currentPointID := g.gameState.GetCurrentPointID()
+	if currentPointID == "" {
+		return []entities.Interaction{}, nil
+	}
+
+	pointState := g.gameState.GetPointState(currentPointID)
+	return pointState.Interactions, nil
 }

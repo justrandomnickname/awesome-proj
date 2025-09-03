@@ -46,10 +46,10 @@ frontend/
 ### 📊 Current Data Flow
 
 1. `GameEngine.NewGameEngine()` → creates world via `WorldGenerationService`
-2. `LocationBuilder.GenerateRandomLocations()` → creates single "start" location
-3. `NPCBuilder.GenerateNPCsForLocation()` → creates 2-5 NPCs with race logic
-4. Frontend calls `GetCurrentLocation()` → returns LocationInfo with NPCs
-5. `LocationScreen.svelte` displays location name, description, NPC cards
+2. `LocationBuilder.GenerateLocationHierarchyWithNPCs()` → creates hierarchical structure (Cluster → SubCluster → Point)
+3. `NPCBuilder.GenerateNPCsForPoint()` → creates 1-3 NPCs per Point with race logic
+4. Frontend calls `GetCurrentPoint()` → returns current Point with NPCs
+5. `LocationScreen.svelte` displays current Point navigation and NPC cards
 
 ### 🎲 NPC Generation Logic
 

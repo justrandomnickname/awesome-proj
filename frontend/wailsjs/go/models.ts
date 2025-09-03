@@ -183,72 +183,6 @@ export namespace entities {
 		    return a;
 		}
 	}
-	export class NPC {
-	    id: string;
-	    name: string;
-	    race: string;
-	    location_id: string;
-	    description: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new NPC(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
-	        this.name = source["name"];
-	        this.race = source["race"];
-	        this.location_id = source["location_id"];
-	        this.description = source["description"];
-	    }
-	}
-	export class Location {
-	    id: string;
-	    name: string;
-	    description: string;
-	    current_state: string;
-	    type: string;
-	    exits: Record<string, string>;
-	    npcs: string[];
-	    npcs_detailed?: NPC[];
-	    interactions?: Interaction[];
-	
-	    static createFrom(source: any = {}) {
-	        return new Location(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
-	        this.name = source["name"];
-	        this.description = source["description"];
-	        this.current_state = source["current_state"];
-	        this.type = source["type"];
-	        this.exits = source["exits"];
-	        this.npcs = source["npcs"];
-	        this.npcs_detailed = this.convertValues(source["npcs_detailed"], NPC);
-	        this.interactions = this.convertValues(source["interactions"], Interaction);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
 	export class LocationHierarchy {
 	    clusters: Record<string, Cluster>;
 	
@@ -279,7 +213,72 @@ export namespace entities {
 		    return a;
 		}
 	}
+	export class TemperTraits {
+	    id: string;
+	    npc_id: string;
+	    prudence: number;
+	    emotionality: number;
+	    independence: number;
+	    optimism: number;
+	    flexibility: number;
+	    aggressiveness: number;
 	
+	    static createFrom(source: any = {}) {
+	        return new TemperTraits(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.npc_id = source["npc_id"];
+	        this.prudence = source["prudence"];
+	        this.emotionality = source["emotionality"];
+	        this.independence = source["independence"];
+	        this.optimism = source["optimism"];
+	        this.flexibility = source["flexibility"];
+	        this.aggressiveness = source["aggressiveness"];
+	    }
+	}
+	export class NPC {
+	    id: string;
+	    name: string;
+	    race: string;
+	    location_id: string;
+	    description: string;
+	    temper_traits: TemperTraits;
+	
+	    static createFrom(source: any = {}) {
+	        return new NPC(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.race = source["race"];
+	        this.location_id = source["location_id"];
+	        this.description = source["description"];
+	        this.temper_traits = this.convertValues(source["temper_traits"], TemperTraits);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	
 	export class SaveInfo {
 	    name: string;
@@ -316,6 +315,7 @@ export namespace entities {
 		    return a;
 		}
 	}
+	
 
 }
 

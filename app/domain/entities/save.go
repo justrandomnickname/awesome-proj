@@ -2,6 +2,14 @@ package entities
 
 import "time"
 
+type SaveData struct {
+	SaveName  string      `json:"save_name"`
+	CreatedAt time.Time   `json:"created_at"`
+	World     interface{} `json:"world"`
+	GameState interface{} `json:"game_state"`
+	Version   string      `json:"version"`
+}
+
 type SaveInfo struct {
 	Name      string    `json:"name"`
 	CreatedAt time.Time `json:"created_at"`

@@ -7,7 +7,6 @@ type InteractionType string
 const (
 	InteractionTypePlayerAction     InteractionType = "player_action"
 	InteractionTypeLocationResponse InteractionType = "location_response"
-	InteractionTypeLocationState    InteractionType = "location_state"
 	InteractionTypePlayerMovement   InteractionType = "player_movement"
 )
 

@@ -22,7 +22,5 @@ func (wgs *WorldGenerationService) GenerateWorld(name string, seed int64) *aggre
 	hierarchy := wgs.locationBuilder.GenerateLocationHierarchyWithNPCs(world, rng)
 	world.SetHierarchy(hierarchy)
 
-	wgs.locationBuilder.GenerateRandomLocations(world, rng, 1)
-
 	return world
 }

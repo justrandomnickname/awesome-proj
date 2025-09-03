@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte"
 	import {
-		GetCurrentLocation,
 		PerformPlayerAction,
 		GetCurrentPoint,
 		GetAvailableConnections,
@@ -9,9 +8,11 @@
 		GetLocationHierarchy,
 		MoveToPoint,
 		GetNPCsForCurrentPoint,
+		GetInteractionsForCurrentPoint,
 		GenerateSubclusterDescriptionPrompt,
 	} from "../../wailsjs/go/app/App.js"
 	import SaveMenu from "./SaveMenu.svelte"
+	import MapViewer from "./MapViewer.svelte"
 
 	interface NPCInfo {
 		id: string
@@ -65,7 +66,7 @@
 	}
 
 	let locationInfo: LocationInfo | null = null
-	let interactions: LocationInfo["interactions"] = []
+	let interactions: InteractionInfo[] = [] // Пустой массив пока что
 	let currentPoint: Point | null = null
 	let availableConnections: Point[] = []
 	let availableConnectionsInfo: ConnectionInfo[] = []
@@ -74,6 +75,7 @@
 	let error = ""
 	let saveMenu: SaveMenu
 	let interactionsScrollElement: HTMLElement
+	let showMap = false
 
 	// Action input
 	let actionText = ""
@@ -105,13 +107,6 @@
 			loading = true
 			error = ""
 
-			const location = await GetCurrentLocation()
-
-			console.log("location", location)
-			locationInfo = location
-
-			interactions = location.interactions || []
-
 			// Загружаем информацию о текущей точке и доступных переходах
 			await loadNavigationInfo()
 		} catch (err) {
@@ -137,6 +132,10 @@
 			// Загружаем NPCs для текущего Point
 			const npcs = await GetNPCsForCurrentPoint()
 			currentPointNPCs = npcs
+
+			// Загружаем историю взаимодействий для текущего Point
+			const interactionsData = await GetInteractionsForCurrentPoint()
+			interactions = interactionsData
 		} catch (err) {
 			console.error("Failed to load navigation info:", err)
 			// Не показываем ошибку пользователю, просто логируем
@@ -256,6 +255,11 @@
 		loadCurrentLocation()
 	}
 
+	// Функция вызывается при загрузке игры из сохранения
+	async function onGameLoaded() {
+		await loadCurrentLocation()
+	}
+
 	onMount(() => {
 		loadCurrentLocation()
 	})
@@ -266,7 +270,7 @@
 		<h2>Текущая локация</h2>
 	</div>
 
-	{#if locationInfo && currentPoint}
+	{#if currentPoint}
 		<div class="main-layout">
 			<!-- Левая часть: взаимодействия и поле ввода -->
 			<div class="interactions-panel">
@@ -393,6 +397,9 @@
 					<button class="save-menu-btn" on:click={() => saveMenu.openMenu()}>
 						💾 Сохранения
 					</button>
+					<button class="map-btn" on:click={() => (showMap = true)}>
+						🗺️ Показать карту
+					</button>
 					<button class="ai-prompt-btn" on:click={generateAIPrompt}>
 						🤖 Генерировать промпт ИИ
 					</button>
@@ -430,7 +437,13 @@
 	{/if}
 </div>
 
-<SaveMenu bind:this={saveMenu} />
+<!-- Компонент сохранений -->
+<SaveMenu bind:this={saveMenu} on:gameLoaded={onGameLoaded} />
+
+<!-- Компонент карты -->
+{#if showMap}
+	<MapViewer visible={showMap} on:close={() => (showMap = false)} />
+{/if}
 
 <style>
 	.location-screen {
@@ -561,6 +574,23 @@
 
 	.save-menu-btn:hover {
 		background: #2980b9;
+	}
+
+	.map-btn {
+		width: 100%;
+		background: #27ae60;
+		color: white;
+		border: none;
+		padding: 12px 15px;
+		border-radius: 6px;
+		cursor: pointer;
+		font-size: 14px;
+		font-weight: bold;
+		margin-bottom: 10px;
+	}
+
+	.map-btn:hover {
+		background: #229954;
 	}
 
 	.ai-prompt-btn {

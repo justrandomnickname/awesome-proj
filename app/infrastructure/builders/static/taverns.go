@@ -5,22 +5,14 @@ import (
 	"fmt"
 )
 
-type NPCBuilderInterface interface {
-	GenerateInnkeeper(pointID string) *entities.NPC
-}
-
 type WorldInterface interface {
 	AddNPC(npc *entities.NPC)
 }
 
-type TavernBuilder struct {
-	npcBuilder NPCBuilderInterface
-}
+type TavernBuilder struct{}
 
-func NewTavernBuilder(npcBuilder NPCBuilderInterface) *TavernBuilder {
-	return &TavernBuilder{
-		npcBuilder: npcBuilder,
-	}
+func NewTavernBuilder() *TavernBuilder {
+	return &TavernBuilder{}
 }
 
 // GenerateTavernDefault создает стандартную таверну с подключением к указанной внешней точке
@@ -96,7 +88,7 @@ func (tb *TavernBuilder) GenerateTavernDefault(clusterID string, exitPointID str
 	poorRoomsPoint.AddConnection(pointIDs["Второй этаж"])
 
 	// Генерируем трактирщика для главного холла
-	innkeeper := tb.npcBuilder.GenerateInnkeeper(pointIDs["Главный холл"])
+	innkeeper := GenerateInnkeeper(pointIDs["Главный холл"])
 	world.AddNPC(innkeeper)
 
 	// Добавляем трактирщика в Point

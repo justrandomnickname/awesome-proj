@@ -18,12 +18,12 @@ export function GetAvailableConnectionsInfo() {
   return window['go']['app']['App']['GetAvailableConnectionsInfo']();
 }
 
-export function GetCurrentLocation() {
-  return window['go']['app']['App']['GetCurrentLocation']();
-}
-
 export function GetCurrentPoint() {
   return window['go']['app']['App']['GetCurrentPoint']();
+}
+
+export function GetInteractionsForCurrentPoint() {
+  return window['go']['app']['App']['GetInteractionsForCurrentPoint']();
 }
 
 export function GetLocationHierarchy() {

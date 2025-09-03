@@ -10,9 +10,9 @@ export function GetAvailableConnections():Promise<Array<entities.Point>>;
 
 export function GetAvailableConnectionsInfo():Promise<Array<entities.ConnectionInfo>>;
 
-export function GetCurrentLocation():Promise<entities.Location>;
-
 export function GetCurrentPoint():Promise<entities.Point>;
+
+export function GetInteractionsForCurrentPoint():Promise<Array<entities.Interaction>>;
 
 export function GetLocationHierarchy():Promise<entities.LocationHierarchy>;
 

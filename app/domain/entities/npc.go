@@ -1,11 +1,12 @@
 package entities
 
 type NPC struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Race        string `json:"race"`
-	LocationID  string `json:"location_id"`
-	Description string `json:"description"`
+	ID           string       `json:"id"`
+	Name         string       `json:"name"`
+	Race         string       `json:"race"`
+	LocationID   string       `json:"location_id"`
+	Description  string       `json:"description"`
+	TemperTraits TemperTraits `json:"temper_traits"`
 }
 
 func (npc *NPC) ToFrontendInfo() map[string]interface{} {

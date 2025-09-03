@@ -91,7 +91,7 @@ func NewLocationBuilder() *LocationBuilder {
 			},
 		},
 		npcBuilder:    npcBuilder,
-		tavernBuilder: static.NewTavernBuilder(npcBuilder),
+		tavernBuilder: static.NewTavernBuilder(),
 		clusterTemplates: []ClusterTemplate{
 			{
 				Name: "Темный лес", Type: "forest",
@@ -348,41 +348,5 @@ func (lb *LocationBuilder) connectPointsInSubCluster(subCluster *entities.SubClu
 				point.AddConnection(otherPoint.ID)
 			}
 		}
-	}
-}
-
-func (lb *LocationBuilder) GenerateRandomLocations(world WorldInterface, rng *rand.Rand, count int) {
-	usedNames := make(map[string]bool)
-	startLocation := lb.buildRandomLocation(rng, "start", usedNames)
-	world.AddLocation("start", startLocation)
-	npcs := lb.npcBuilder.GenerateNPCsForLocation(startLocation, rng)
-	for _, npc := range npcs {
-		world.AddNPC(npc)
-	}
-}
-
-func (lb *LocationBuilder) buildRandomLocation(rng *rand.Rand, locationID string, usedNames map[string]bool) *entities.Location {
-	locType := lb.locationTypes[rng.Intn(len(lb.locationTypes))]
-	var name string
-	for {
-		name = lb.locationNames[rng.Intn(len(lb.locationNames))]
-		if !usedNames[name] {
-			usedNames[name] = true
-			break
-		}
-	}
-	var description string
-	if descs, exists := lb.descriptions[locType]; exists {
-		description = descs[rng.Intn(len(descs))]
-	} else {
-		description = fmt.Sprintf("Загадочное место типа %s", locType)
-	}
-	return &entities.Location{
-		ID:          locationID,
-		Name:        name,
-		Description: description,
-		Type:        locType,
-		Exits:       make(map[string]string),
-		NPCs:        make([]string, 0),
 	}
 }

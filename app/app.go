@@ -28,9 +28,6 @@ func (a *App) Startup(ctx context.Context) {
 func (a *App) Greet(name string) string {
 	return fmt.Sprintf("Hello %s, It's show time!", name)
 }
-func (a *App) GetCurrentLocation() (*entities.Location, error) {
-	return a.gameEngine.GetCurrentLocationInfo()
-}
 func (a *App) SaveGame(saveName string) error {
 	return a.gameEngine.SaveGame(saveName)
 }
@@ -68,6 +65,10 @@ func (a *App) GetAvailableConnectionsInfo() ([]*entities.ConnectionInfo, error) 
 
 func (a *App) GetNPCsForCurrentPoint() ([]*entities.NPC, error) {
 	return a.gameEngine.GetNPCsForCurrentPoint()
+}
+
+func (a *App) GetInteractionsForCurrentPoint() ([]entities.Interaction, error) {
+	return a.gameEngine.GetInteractionsForCurrentPoint()
 }
 
 func (a *App) GenerateSubclusterDescriptionPrompt() (string, error) {
