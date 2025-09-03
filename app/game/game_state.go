@@ -15,6 +15,14 @@ func NewGameState(worldSeed int64) *GameState {
 		PointStates:    make(map[string]*entities.PointState),
 	}
 }
+
+func NewGameStateWithEntryPoint(worldSeed int64, entryPointID string) *GameState {
+	return &GameState{
+		CurrentPointID: entryPointID,
+		WorldSeed:      worldSeed,
+		PointStates:    make(map[string]*entities.PointState),
+	}
+}
 func (gs *GameState) GetCurrentPointID() string {
 	return gs.CurrentPointID
 }

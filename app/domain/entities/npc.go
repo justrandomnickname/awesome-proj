@@ -7,6 +7,7 @@ type NPC struct {
 	LocationID   string       `json:"location_id"`
 	Description  string       `json:"description"`
 	TemperTraits TemperTraits `json:"temper_traits"`
+	TraitIDs     []string     `json:"trait_ids"` // Список ID трейтов
 }
 
 func (npc *NPC) ToFrontendInfo() map[string]interface{} {
@@ -16,6 +17,26 @@ func (npc *NPC) ToFrontendInfo() map[string]interface{} {
 		"race":        npc.Race,
 		"description": npc.Description,
 	}
+}
+
+// GetNPCTraits возвращает список названий трейтов для использования в промптах
+// Требует TraitSystem для получения названий по ID
+func (npc *NPC) GetNPCTraits(traitSystem interface{}) []string {
+	// Интерфейс для избежания циклической зависимости
+	// В реальном использовании будет передан *TraitSystem
+	if len(npc.TraitIDs) == 0 {
+		return []string{}
+	}
+
+	// Проверяем, что переданный объект имеет метод GetTraitNamesByIDs
+	if ts, ok := traitSystem.(interface {
+		GetTraitNamesByIDs([]string) []string
+	}); ok {
+		return ts.GetTraitNamesByIDs(npc.TraitIDs)
+	}
+
+	// Если метод недоступен, возвращаем пустой список
+	return []string{}
 }
 
 func NewNPCFromMap(npcData interface{}) *NPC {

@@ -246,6 +246,7 @@ export namespace entities {
 	    location_id: string;
 	    description: string;
 	    temper_traits: TemperTraits;
+	    trait_ids: string[];
 	
 	    static createFrom(source: any = {}) {
 	        return new NPC(source);
@@ -259,6 +260,7 @@ export namespace entities {
 	        this.location_id = source["location_id"];
 	        this.description = source["description"];
 	        this.temper_traits = this.convertValues(source["temper_traits"], TemperTraits);
+	        this.trait_ids = source["trait_ids"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

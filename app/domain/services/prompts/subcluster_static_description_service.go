@@ -90,25 +90,32 @@ func (s *SubclusterStaticDescriptionService) GenerateSubclusterDescriptionPrompt
 		})
 	}
 
-	// Collect NPCs info (only real NPC data, no fallback)
+	// Collect NPCs info for all points in the subcluster
 	npcsWithLocations := make([]map[string]interface{}, 0)
+	traitSystem := s.gameEngine.GetTraitSystem()
+
 	for _, point := range currentSubCluster.Points {
-		// Only get NPCs for current point (we can only get real NPC data for current point)
-		if point.ID == currentPoint.ID {
-			currentNPCs, err := s.gameEngine.GetNPCsForCurrentPoint()
-			if err == nil {
-				for _, npc := range currentNPCs {
-					npcsWithLocations = append(npcsWithLocations, map[string]interface{}{
-						"id":         npc.ID,
-						"name":       npc.Name,
-						"race":       npc.Race,
-						"point_name": point.Name,
-					})
-				}
+		// Get NPCs for each point in the subcluster
+		pointNPCs, err := s.gameEngine.GetNPCsForPoint(point.ID)
+		if err == nil {
+			for _, npc := range pointNPCs {
+				npcsWithLocations = append(npcsWithLocations, map[string]interface{}{
+					"id":         npc.ID,
+					"name":       npc.Name,
+					"race":       npc.Race,
+					"point_name": point.Name,
+					"temper_traits": map[string]interface{}{
+						"prudence":       npc.TemperTraits.Prudence,
+						"emotionality":   npc.TemperTraits.Emotionality,
+						"independence":   npc.TemperTraits.Independence,
+						"optimism":       npc.TemperTraits.Optimism,
+						"flexibility":    npc.TemperTraits.Flexibility,
+						"aggressiveness": npc.TemperTraits.Aggressiveness,
+					},
+					"traits": npc.GetNPCTraits(traitSystem),
+				})
 			}
 		}
-		// For other points, we skip NPCs if we can't get real data
-		// No fallback logic - if we can't get proper NPC info, we don't include them
 	}
 
 	// Generate the prompt
@@ -183,12 +190,23 @@ func (s *SubclusterStaticDescriptionService) buildSubclusterDescriptionPrompt(cu
 
 	sb.WriteString("NPC В СУБКЛАСТЕРЕ:\n")
 	if len(npcs) > 0 {
+		sb.WriteString("СИСТЕМА ЧЕРТ ХАРАКТЕРА: Каждый NPC имеет 6 черт характера со значениями от -10 до +10, где 0 = нейтрально, +10 = максимум, -10 = противоположность. Большинство значений находятся в диапазоне -3...+3, экстремальные значения ±8...±10 очень редки.\n\n")
+		sb.WriteString("СИСТЕМА ТРЕЙТОВ: Каждый NPC также может иметь специальные трейты, которые описывают его особенности, навыки или роль в мире.\n\n")
 		for _, npc := range npcs {
 			npcName := npc["name"].(string)
 			npcRace := npc["race"].(string)
 			npcPointName := npc["point_name"].(string)
 			npcID := npc["id"].(string)
+			temperTraits := npc["temper_traits"].(map[string]interface{})
+			traits := npc["traits"].([]string)
+
 			sb.WriteString(fmt.Sprintf("- %s (%s) в локации \"%s\" (ID: %s)\n", npcName, npcRace, npcPointName, npcID))
+			sb.WriteString(fmt.Sprintf("  Черты: Осторожность=%d, Эмоциональность=%d, Независимость=%d, Оптимизм=%d, Гибкость=%d, Агрессивность=%d\n",
+				temperTraits["prudence"], temperTraits["emotionality"], temperTraits["independence"],
+				temperTraits["optimism"], temperTraits["flexibility"], temperTraits["aggressiveness"]))
+			if len(traits) > 0 {
+				sb.WriteString(fmt.Sprintf("  Трейты: %s\n", strings.Join(traits, ", ")))
+			}
 		}
 	} else {
 		sb.WriteString("- В данном субкластере NPC отсутствуют или недоступны для анализа\n")
@@ -199,7 +217,16 @@ func (s *SubclusterStaticDescriptionService) buildSubclusterDescriptionPrompt(cu
 	sb.WriteString("1. КЛАСТЕР: 3-5 предложений, общая атмосфера и суть места\n")
 	sb.WriteString("2. СУБКЛАСТЕР: 3-5 предложений, более детальное описание конкретной области\n")
 	sb.WriteString("3. ЛОКАЦИИ: по 3-5 предложений для каждой, уникальные детали, архитектура, атмосфера\n")
-	sb.WriteString("4. NPC: по 2-3 предложения для каждого, внешность, характер, роль в мире\n\n")
+	sb.WriteString("4. NPC: по 2-3 предложения для каждого, внешность, характер, роль в мире\n")
+	sb.WriteString("   ВАЖНО ДЛЯ NPC: Используй черты характера для создания яркой личности. Например:\n")
+	sb.WriteString("   - Высокий оптимизм (+7) = жизнерадостный, вдохновляющий\n")
+	sb.WriteString("   - Низкая осторожность (-5) = импульсивный, рискующий\n")
+	sb.WriteString("   - Высокая агрессивность (+8) = вспыльчивый, конфликтный\n")
+	sb.WriteString("   ТРЕЙТЫ NPC: Если у NPC есть трейты, можно отразить(но не обязательно) их в описании:\n")
+	sb.WriteString("   - Опытный Воин = владеет боевыми навыками, носит оружие\n")
+	sb.WriteString("   - Книжный Червь = много читает, умный, носит очки или держит книгу\n")
+	sb.WriteString("   - Любитель Природы = знает растения, предпочитает естественные места\n")
+	sb.WriteString("   Не описывай цифры напрямую, а покажи черты через поведение и внешность!\n\n")
 
 	sb.WriteString("ФОРМАТ ОТВЕТА (СТРОГО СОБЛЮДАЙ):\n")
 	sb.WriteString("ВАЖНО: В заголовках используй ID элементов, а НЕ их названия!\n\n")

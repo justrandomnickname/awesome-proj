@@ -4,6 +4,7 @@ import (
 	"awesome-proj/app/domain/aggregates"
 	"awesome-proj/app/domain/entities"
 	"awesome-proj/app/domain/services"
+	"awesome-proj/app/infrastructure/builders"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -33,17 +34,25 @@ func NewGameEngine() *GameEngine {
 }
 
 func initializeGameState(saveService *services.SaveService) (*aggregates.World, *GameState) {
-	world, gameState, err := tryLoadExistingSave(saveService)
-	if err != nil {
-		// Если нет сохранений или они битые, создаем новую игру
-		// НО только если это действительно отсутствие сохранений
-		if saveService.HasAnySaves() {
-			// Если сохранения есть, но они битые - это критическая ошибка
-			panic(fmt.Sprintf("Failed to load existing save: %v. This indicates corrupted save data.", err))
-		}
-		// Если сохранений нет вообще - создаем новую игру
+	// Проверяем, есть ли вообще сохранения
+	if !saveService.HasAnySaves() {
+		// Если сейвов нет вообще - создаем новую игру
 		return createNewGame()
 	}
+
+	world, gameState, err := tryLoadExistingSave(saveService)
+	if err != nil {
+		// Если есть сохранения, но они битые - создаем новую игру
+		// Старая логика паниковала, но лучше создать новую игру
+		return createNewGame()
+	}
+
+	// Проверяем валидность загруженного состояния
+	if !isGameStateValid(world, gameState) {
+		// Если сохранение не соответствует новой структуре - создаем новую игру
+		return createNewGame()
+	}
+
 	return world, gameState
 }
 
@@ -64,8 +73,58 @@ func createNewGame() (*aggregates.World, *GameState) {
 	worldService := services.NewWorldGenerationService()
 	randomSeed := time.Now().UnixNano()
 	world := worldService.GenerateWorld("Default World", randomSeed)
-	gameState := NewGameState(randomSeed)
+
+	// Находим входную точку в сгенерированном мире
+	entryPointID := findEntryPoint(world)
+	if entryPointID == "" {
+		panic("No entry point found in generated world")
+	}
+
+	gameState := NewGameStateWithEntryPoint(randomSeed, entryPointID)
 	return world, gameState
+}
+
+// findEntryPoint находит первую входную точку в мире
+func findEntryPoint(world *aggregates.World) string {
+	if world.Hierarchy == nil {
+		return ""
+	}
+
+	for _, cluster := range world.Hierarchy.Clusters {
+		for _, subCluster := range cluster.SubClusters {
+			for _, point := range subCluster.Points {
+				if point.IsEntryPoint {
+					return point.ID
+				}
+			}
+		}
+	}
+	return ""
+}
+
+// isGameStateValid проверяет, что текущая точка существует в иерархии мира
+func isGameStateValid(world *aggregates.World, gameState *GameState) bool {
+	if world == nil || gameState == nil || world.Hierarchy == nil {
+		return false
+	}
+
+	currentPointID := gameState.GetCurrentPointID()
+	if currentPointID == "" {
+		return false
+	}
+
+	// Проверяем, существует ли текущая точка в иерархии
+	for _, cluster := range world.Hierarchy.Clusters {
+		for _, subCluster := range cluster.SubClusters {
+			for _, point := range subCluster.Points {
+				if point.ID == currentPointID {
+					return true
+				}
+			}
+		}
+	}
+
+	return false
 }
 
 func deserializeGameState(loadedGameState interface{}) (*GameState, error) {
@@ -375,4 +434,47 @@ func (g *GameEngine) GetInteractionsForCurrentPoint() ([]entities.Interaction, e
 
 	pointState := g.gameState.GetPointState(currentPointID)
 	return pointState.Interactions, nil
+}
+
+// GetTraitSystem returns a trait system instance for trait resolution
+func (g *GameEngine) GetTraitSystem() *builders.TraitSystem {
+	return builders.NewTraitSystem()
+}
+
+// GetNPCsForPoint returns NPCs for a specific point ID
+func (g *GameEngine) GetNPCsForPoint(pointID string) ([]*entities.NPC, error) {
+	hierarchy := g.currentWorld.GetHierarchy()
+
+	// Find the point by ID
+	var targetPoint *entities.Point
+	for _, cluster := range hierarchy.Clusters {
+		for _, subCluster := range cluster.SubClusters {
+			for _, point := range subCluster.Points {
+				if point.ID == pointID {
+					targetPoint = point
+					break
+				}
+			}
+			if targetPoint != nil {
+				break
+			}
+		}
+		if targetPoint != nil {
+			break
+		}
+	}
+
+	if targetPoint == nil {
+		return nil, fmt.Errorf("точка с ID %s не найдена", pointID)
+	}
+
+	// Collect NPCs for this point
+	npcs := make([]*entities.NPC, 0, len(targetPoint.NPCs))
+	for _, npcID := range targetPoint.NPCs {
+		if npc, exists := g.currentWorld.NPCs[npcID]; exists {
+			npcs = append(npcs, npc)
+		}
+	}
+
+	return npcs, nil
 }
