@@ -3,6 +3,7 @@ package services
 import (
 	"awesome-proj/app/domain/aggregates"
 	"awesome-proj/app/domain/entities"
+	"awesome-proj/app/domain/entities/npc"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -92,8 +93,8 @@ func deserializeWorldFromMap(worldData interface{}) (*aggregates.World, error) {
 	}
 	if npcsData, ok := worldMap["npcs"].(map[string]interface{}); ok {
 		for _, npcData := range npcsData {
-			if npc := entities.NewNPCFromMap(npcData); npc != nil {
-				world.AddNPC(npc)
+			if npcEntity := npc.NewNPCFromMap(npcData); npcEntity != nil {
+				world.AddNPC(npcEntity)
 			}
 		}
 	}

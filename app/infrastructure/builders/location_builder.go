@@ -2,6 +2,7 @@ package builders
 
 import (
 	"awesome-proj/app/domain/entities"
+	"awesome-proj/app/domain/entities/npc"
 	"awesome-proj/app/infrastructure/builders/static"
 	"fmt"
 	"math/rand"
@@ -10,7 +11,7 @@ import (
 type WorldInterface interface {
 	GetLocations() map[string]*entities.Location
 	AddLocation(id string, location *entities.Location)
-	AddNPC(npc *entities.NPC)
+	AddNPC(npcEntity *npc.NPC)
 }
 
 type ClusterTemplate struct {

@@ -2,6 +2,7 @@ package builders
 
 import (
 	"awesome-proj/app/domain/entities"
+	"awesome-proj/app/domain/entities/npc"
 	"fmt"
 	"math/rand"
 )
@@ -11,7 +12,7 @@ type NPCBuilder struct {
 	humanNames      []string
 	descriptions    map[string][]string
 	locationRaceMap map[string]string
-	traitSystem     *TraitSystem
+	traitSystem     *npc.TraitSystem
 }
 
 func NewNPCBuilder() *NPCBuilder {
@@ -29,30 +30,30 @@ func NewNPCBuilder() *NPCBuilder {
 		locationRaceMap: map[string]string{
 			"village": "human",
 		},
-		traitSystem: NewTraitSystem(),
+		traitSystem: npc.NewTraitSystem(),
 	}
 }
 
-func (nb *NPCBuilder) GenerateNPCsForPoint(point *entities.Point, clusterType string, rng *rand.Rand) []*entities.NPC {
+func (nb *NPCBuilder) GenerateNPCsForPoint(point *entities.Point, clusterType string, rng *rand.Rand) []*npc.NPC {
 	npcCount := 1 + rng.Intn(3)
-	npcs := make([]*entities.NPC, 0, npcCount)
+	npcs := make([]*npc.NPC, 0, npcCount)
 
 	for i := 0; i < npcCount; i++ {
-		npc := nb.generateSingleNPCForPoint(point, clusterType, rng, i+1)
-		npcs = append(npcs, npc)
-		point.NPCs = append(point.NPCs, npc.ID)
+		generatedNPC := nb.generateSingleNPCForPoint(point, clusterType, rng, i+1)
+		npcs = append(npcs, generatedNPC)
+		point.NPCs = append(point.NPCs, generatedNPC.ID)
 	}
 	return npcs
 }
 
-func (nb *NPCBuilder) generateSingleNPCForPoint(point *entities.Point, clusterType string, rng *rand.Rand, npcIndex int) *entities.NPC {
+func (nb *NPCBuilder) generateSingleNPCForPoint(point *entities.Point, clusterType string, rng *rand.Rand, npcIndex int) *npc.NPC {
 	id := fmt.Sprintf("%s_npc_%d", point.ID, npcIndex)
 	race := nb.selectRaceForLocation(clusterType, rng)
 	name := nb.generateNameForRace(race, rng)
 	description := nb.generateDescriptionForRace(race, rng)
 	temperTraits := nb.generateTemperTraits(race, rng, id)
 
-	npc := &entities.NPC{
+	generatedNPC := &npc.NPC{
 		ID:           id,
 		Name:         name,
 		Race:         race,
@@ -63,17 +64,17 @@ func (nb *NPCBuilder) generateSingleNPCForPoint(point *entities.Point, clusterTy
 	}
 
 	// Генерируем трейты для NPC
-	traits := nb.traitSystem.GenerateTraitsForNPC(npc, rng)
+	traits := nb.traitSystem.GenerateTraitsForNPC(generatedNPC, rng)
 
 	// Применяем эффекты трейтов к характеристикам
-	nb.traitSystem.ApplyTraitEffects(npc, traits)
+	nb.traitSystem.ApplyTraitEffects(generatedNPC, traits)
 
 	// Сохраняем ID трейтов
 	for _, trait := range traits {
-		npc.TraitIDs = append(npc.TraitIDs, trait.ID)
+		generatedNPC.TraitIDs = append(generatedNPC.TraitIDs, trait.ID)
 	}
 
-	return npc
+	return generatedNPC
 }
 
 func (nb *NPCBuilder) selectRaceForLocation(locationType string, rng *rand.Rand) string {
@@ -103,12 +104,12 @@ func (nb *NPCBuilder) generateDescriptionForRace(race string, rng *rand.Rand) st
 	return fmt.Sprintf("Загадочный представитель расы %s", race)
 }
 
-func (nb *NPCBuilder) generateTemperTraits(race string, rng *rand.Rand, npcId string) entities.TemperTraits {
+func (nb *NPCBuilder) generateTemperTraits(race string, rng *rand.Rand, npcId string) npc.TemperTraits {
 	if race == "" {
 		race = "human"
 	}
 
-	return entities.TemperTraits{
+	return npc.TemperTraits{
 		ID:             fmt.Sprintf("%s_temper_traits", npcId),
 		NPC_ID:         npcId,
 		Prudence:       nb.generateTraitValue(rng),

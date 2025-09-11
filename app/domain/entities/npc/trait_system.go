@@ -1,7 +1,6 @@
-package builders
+package npc
 
 import (
-	"awesome-proj/app/domain/entities"
 	"math/rand"
 )
 
@@ -33,7 +32,7 @@ type TraitEffect struct {
 }
 
 // WeightCalculatorFunc - функция для расчёта веса трейта для конкретного NPC
-type WeightCalculatorFunc func(npc *entities.NPC) int
+type WeightCalculatorFunc func(npc *NPC) int
 
 // TraitDefinition определяет трейт и его свойства
 type TraitDefinition struct {
@@ -75,7 +74,7 @@ func (ts *TraitSystem) registerTraits() {
 			EmotionalityModifier:   -1, // Более хладнокровный
 			PrudenceModifier:       +1, // Более осторожный в бою
 		},
-		WeightCalculator: func(npc *entities.NPC) int {
+		WeightCalculator: func(npc *NPC) int {
 			weight := 5 // Базовый вес
 
 			// Влияние расы
@@ -109,7 +108,7 @@ func (ts *TraitSystem) registerTraits() {
 			AggressivenessModifier: -2, // Менее агрессивный
 			IndependenceModifier:   +1, // Более независимый в мышлении
 		},
-		WeightCalculator: func(npc *entities.NPC) int {
+		WeightCalculator: func(npc *NPC) int {
 			weight := 8 // Базовый вес
 
 			// Влияние черт характера
@@ -141,7 +140,7 @@ func (ts *TraitSystem) registerTraits() {
 			FlexibilityModifier:    +1, // Более гибкий
 			AggressivenessModifier: -1, // Менее агрессивный
 		},
-		WeightCalculator: func(npc *entities.NPC) int {
+		WeightCalculator: func(npc *NPC) int {
 			weight := 10 // Базовый вес
 
 			// Влияние черт характера
@@ -164,7 +163,7 @@ func (ts *TraitSystem) registerTraits() {
 }
 
 // GenerateTraitsForNPC генерирует трейты для конкретного NPC
-func (ts *TraitSystem) GenerateTraitsForNPC(npc *entities.NPC, rng *rand.Rand) []Trait {
+func (ts *TraitSystem) GenerateTraitsForNPC(npc *NPC, rng *rand.Rand) []Trait {
 	var traits []Trait
 
 	// Максимум 2 трейта на персонажа (можно настроить)
@@ -221,7 +220,7 @@ func (ts *TraitSystem) GenerateTraitsForNPC(npc *entities.NPC, rng *rand.Rand) [
 }
 
 // ApplyTraitEffects применяет эффекты трейтов к характеристикам NPC
-func (ts *TraitSystem) ApplyTraitEffects(npc *entities.NPC, traits []Trait) {
+func (ts *TraitSystem) ApplyTraitEffects(npc *NPC, traits []Trait) {
 	for _, trait := range traits {
 		if definition, exists := ts.traitDefinitions[trait.Type]; exists {
 			effect := definition.Effect

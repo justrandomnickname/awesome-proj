@@ -1,5 +1,7 @@
 package entities
 
+import "awesome-proj/app/domain/entities/npc"
+
 type Location struct {
 	ID           string            `json:"id"`
 	Name         string            `json:"name"`
@@ -8,7 +10,7 @@ type Location struct {
 	Type         string            `json:"type"`
 	Exits        map[string]string `json:"exits"`
 	NPCs         []string          `json:"npcs"`
-	NPCsDetailed []*NPC            `json:"npcs_detailed,omitempty"`
+	NPCsDetailed []*npc.NPC        `json:"npcs_detailed,omitempty"`
 	Interactions []Interaction     `json:"interactions,omitempty"`
 }
 
@@ -18,7 +20,7 @@ type PointState struct {
 	FirstVisit   bool          `json:"first_visit"`
 }
 
-func (l *Location) ToFrontendFormat(npcs []*NPC, interactions []Interaction) {
+func (l *Location) ToFrontendFormat(npcs []*npc.NPC, interactions []Interaction) {
 	l.NPCsDetailed = npcs
 	l.Interactions = interactions
 }

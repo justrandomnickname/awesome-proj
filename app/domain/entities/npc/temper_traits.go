@@ -1,12 +1,5 @@
-package entities
+package npc
 
-//Temper_traits:
-//prudence
-//emotionality
-//independence
-//optimism
-//flexibility
-//aggressiveness
 type TemperTraits struct {
 	ID             string `json:"id"`
 	NPC_ID         string `json:"npc_id"`

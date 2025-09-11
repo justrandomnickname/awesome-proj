@@ -2,11 +2,12 @@ package static
 
 import (
 	"awesome-proj/app/domain/entities"
+	"awesome-proj/app/domain/entities/npc"
 	"fmt"
 )
 
 type WorldInterface interface {
-	AddNPC(npc *entities.NPC)
+	AddNPC(npcEntity *npc.NPC)
 }
 
 type TavernBuilder struct{}

@@ -2,6 +2,7 @@ package app
 
 import (
 	"awesome-proj/app/domain/entities"
+	"awesome-proj/app/domain/entities/npc"
 	"awesome-proj/app/domain/services/prompts"
 	"awesome-proj/app/game"
 	"context"
@@ -63,7 +64,7 @@ func (a *App) GetAvailableConnectionsInfo() ([]*entities.ConnectionInfo, error) 
 	return a.gameEngine.GetAvailableConnectionsInfo()
 }
 
-func (a *App) GetNPCsForCurrentPoint() ([]*entities.NPC, error) {
+func (a *App) GetNPCsForCurrentPoint() ([]*npc.NPC, error) {
 	return a.gameEngine.GetNPCsForCurrentPoint()
 }
 

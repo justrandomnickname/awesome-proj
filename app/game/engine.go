@@ -3,8 +3,8 @@ package game
 import (
 	"awesome-proj/app/domain/aggregates"
 	"awesome-proj/app/domain/entities"
+	"awesome-proj/app/domain/entities/npc"
 	"awesome-proj/app/domain/services"
-	"awesome-proj/app/infrastructure/builders"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -406,16 +406,16 @@ func (g *GameEngine) GetAvailableConnectionsInfo() ([]*entities.ConnectionInfo, 
 	return connections, nil
 }
 
-func (g *GameEngine) GetNPCsForCurrentPoint() ([]*entities.NPC, error) {
+func (g *GameEngine) GetNPCsForCurrentPoint() ([]*npc.NPC, error) {
 	currentPoint, err := g.GetCurrentPoint()
 	if err != nil {
 		return nil, err
 	}
 
-	npcs := make([]*entities.NPC, 0, len(currentPoint.NPCs))
+	npcs := make([]*npc.NPC, 0, len(currentPoint.NPCs))
 	for _, npcID := range currentPoint.NPCs {
-		if npc, exists := g.currentWorld.NPCs[npcID]; exists {
-			npcs = append(npcs, npc)
+		if npcEntity, exists := g.currentWorld.NPCs[npcID]; exists {
+			npcs = append(npcs, npcEntity)
 		}
 	}
 
@@ -437,12 +437,12 @@ func (g *GameEngine) GetInteractionsForCurrentPoint() ([]entities.Interaction, e
 }
 
 // GetTraitSystem returns a trait system instance for trait resolution
-func (g *GameEngine) GetTraitSystem() *builders.TraitSystem {
-	return builders.NewTraitSystem()
+func (g *GameEngine) GetTraitSystem() *npc.TraitSystem {
+	return npc.NewTraitSystem()
 }
 
 // GetNPCsForPoint returns NPCs for a specific point ID
-func (g *GameEngine) GetNPCsForPoint(pointID string) ([]*entities.NPC, error) {
+func (g *GameEngine) GetNPCsForPoint(pointID string) ([]*npc.NPC, error) {
 	hierarchy := g.currentWorld.GetHierarchy()
 
 	// Find the point by ID
@@ -469,10 +469,10 @@ func (g *GameEngine) GetNPCsForPoint(pointID string) ([]*entities.NPC, error) {
 	}
 
 	// Collect NPCs for this point
-	npcs := make([]*entities.NPC, 0, len(targetPoint.NPCs))
+	npcs := make([]*npc.NPC, 0, len(targetPoint.NPCs))
 	for _, npcID := range targetPoint.NPCs {
-		if npc, exists := g.currentWorld.NPCs[npcID]; exists {
-			npcs = append(npcs, npc)
+		if npcEntity, exists := g.currentWorld.NPCs[npcID]; exists {
+			npcs = append(npcs, npcEntity)
 		}
 	}
 
