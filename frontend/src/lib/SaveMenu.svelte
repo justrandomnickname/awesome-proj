@@ -1,8 +1,14 @@
 <script lang="ts">
 	import { GetSavesList, SaveGame, LoadGame, DeleteSave, NewGame } from "../../wailsjs/go/app/App"
 	import { entities } from "../../wailsjs/go/models"
+	import { createEventDispatcher, onMount } from "svelte"
+
+	const dispatch = createEventDispatcher()
 
 	type SaveInfo = entities.SaveInfo
+
+	export let mode = "full" // "full" или "load-only"
+	export let visible = false // Новый prop для внешнего управления видимостью
 
 	let isOpen = false
 	let saves: SaveInfo[] = []
@@ -16,16 +22,30 @@
 		return Date.now().toString()
 	}
 
-	export function openMenu() {
+	// Автоматически открываем меню при изменении visible
+	$: if (visible && !isOpen) {
+		openMenuInternal()
+	} else if (!visible && isOpen) {
+		isOpen = false
+	}
+
+	function openMenuInternal() {
 		isOpen = true
 		// Генерируем новый случайный seed при открытии меню
-		gameSeed = generateRandomSeed()
+		if (mode === "full") {
+			gameSeed = generateRandomSeed()
+		}
 		loadSaves()
+	}
+
+	export function openMenu() {
+		openMenuInternal()
 	}
 
 	function closeMenu() {
 		isOpen = false
 		error = ""
+		dispatch("close")
 	}
 
 	async function loadSaves() {
@@ -79,6 +99,7 @@
 				console.log("Dispatching gameLoaded event")
 				window.dispatchEvent(new CustomEvent("gameLoaded"))
 			}
+			dispatch("gameLoaded")
 		} catch (err) {
 			console.error("Error loading game:", err)
 			error = `Ошибка загрузки: ${err}`
@@ -131,7 +152,7 @@
 	}
 </script>
 
-{#if isOpen}
+{#if visible}
 	<div class="overlay" on:click={closeMenu}>
 		<div class="menu" on:click|stopPropagation>
 			<div class="menu-header">
@@ -144,54 +165,56 @@
 			{/if}
 
 			<div class="menu-content">
-				<!-- Новая игра -->
-				<div class="section">
-					<h3>Новая игра</h3>
-					<div class="new-game-form">
-						<div class="seed-input-group">
-							<label for="game-seed">Seed игры:</label>
-							<div>
-								<input
-									id="game-seed"
-									type="text"
-									bind:value={gameSeed}
-									placeholder="Введите seed или оставьте случайный"
-									disabled={loading} />
-								<button
-									type="button"
-									class="regenerate-seed-btn"
-									on:click={() => (gameSeed = generateRandomSeed())}
-									disabled={loading}
-									title="Сгенерировать новый случайный seed">
-									🎲
-								</button>
+				{#if mode === "full"}
+					<!-- Новая игра -->
+					<div class="section">
+						<h3>Новая игра</h3>
+						<div class="new-game-form">
+							<div class="seed-input-group">
+								<label for="game-seed">Seed игры:</label>
+								<div>
+									<input
+										id="game-seed"
+										type="text"
+										bind:value={gameSeed}
+										placeholder="Введите seed или оставьте случайный"
+										disabled={loading} />
+									<button
+										type="button"
+										class="regenerate-seed-btn"
+										on:click={() => (gameSeed = generateRandomSeed())}
+										disabled={loading}
+										title="Сгенерировать новый случайный seed">
+										🎲
+									</button>
+								</div>
 							</div>
+							<button
+								class="new-game-btn"
+								on:click={newGame}
+								disabled={loading || gameSeed.trim().length === 0}>
+								🎮 Начать новую игру
+							</button>
 						</div>
-						<button
-							class="new-game-btn"
-							on:click={newGame}
-							disabled={loading || gameSeed.trim().length === 0}>
-							🎮 Начать новую игру
-						</button>
 					</div>
-				</div>
 
-				<!-- Сохранить текущую игру -->
-				<div class="section">
-					<h3>Сохранить текущую игру</h3>
-					<div class="save-form">
-						<input
-							type="text"
-							bind:value={newSaveName}
-							placeholder="Имя сохранения"
-							disabled={loading} />
-						<button
-							on:click={saveGame}
-							disabled={loading || newSaveName.trim().length === 0}>
-							💾 Сохранить
-						</button>
+					<!-- Сохранить текущую игру -->
+					<div class="section">
+						<h3>Сохранить текущую игру</h3>
+						<div class="save-form">
+							<input
+								type="text"
+								bind:value={newSaveName}
+								placeholder="Имя сохранения"
+								disabled={loading} />
+							<button
+								on:click={saveGame}
+								disabled={loading || newSaveName.trim().length === 0}>
+								💾 Сохранить
+							</button>
+						</div>
 					</div>
-				</div>
+				{/if}
 
 				<!-- Список сохранений -->
 				<div class="section">

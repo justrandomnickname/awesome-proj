@@ -5,6 +5,8 @@ import {npc} from '../models';
 
 export function DeleteSave(arg1:string):Promise<void>;
 
+export function ExitGame():Promise<void>;
+
 export function GenerateSubclusterDescriptionPrompt():Promise<string>;
 
 export function GetAvailableConnections():Promise<Array<entities.Point>>;

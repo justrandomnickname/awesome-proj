@@ -13,6 +13,7 @@
 	} from "../../wailsjs/go/app/App.js"
 	import SaveMenu from "./SaveMenu.svelte"
 	import MapViewer from "./MapViewer.svelte"
+	import InGameMenu from "./InGameMenu.svelte"
 
 	interface NPCInfo {
 		id: string
@@ -74,6 +75,7 @@
 	let loading = true
 	let error = ""
 	let saveMenu: SaveMenu
+	let inGameMenu: InGameMenu
 	let interactionsScrollElement: HTMLElement
 	let showMap = false
 
@@ -260,6 +262,18 @@
 		await loadCurrentLocation()
 	}
 
+	// Обработчики событий игрового меню
+	function onInGameMenuGameLoaded() {
+		loadCurrentLocation()
+	}
+
+	function onReturnToMainMenu() {
+		// Этот event будет обработан в App.svelte
+		if (typeof window !== "undefined") {
+			window.dispatchEvent(new CustomEvent("returnToMainMenu"))
+		}
+	}
+
 	onMount(() => {
 		loadCurrentLocation()
 	})
@@ -394,8 +408,8 @@
 			<!-- Правая часть: NPC и кнопки -->
 			<div class="sidebar">
 				<div class="sidebar-section">
-					<button class="save-menu-btn" on:click={() => saveMenu.openMenu()}>
-						💾 Сохранения
+					<button class="menu-btn" on:click={() => inGameMenu.openMenu()}>
+						🎮 Меню
 					</button>
 					<button class="map-btn" on:click={() => (showMap = true)}>
 						🗺️ Показать карту
@@ -438,7 +452,13 @@
 </div>
 
 <!-- Компонент сохранений -->
-<SaveMenu bind:this={saveMenu} on:gameLoaded={onGameLoaded} />
+<SaveMenu bind:this={saveMenu} visible={false} on:gameLoaded={onGameLoaded} />
+
+<!-- Игровое меню -->
+<InGameMenu
+	bind:this={inGameMenu}
+	on:gameLoaded={onInGameMenuGameLoaded}
+	on:returnToMainMenu={onReturnToMainMenu} />
 
 <!-- Компонент карты -->
 {#if showMap}
@@ -559,7 +579,7 @@
 		flex: 1;
 	}
 
-	.save-menu-btn {
+	.menu-btn {
 		width: 100%;
 		background: #3498db;
 		color: white;
@@ -572,7 +592,7 @@
 		margin-bottom: 10px;
 	}
 
-	.save-menu-btn:hover {
+	.menu-btn:hover {
 		background: #2980b9;
 	}
 

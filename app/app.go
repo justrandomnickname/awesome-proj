@@ -7,6 +7,7 @@ import (
 	"awesome-proj/app/game"
 	"context"
 	"fmt"
+	"os"
 )
 
 type App struct {
@@ -74,4 +75,9 @@ func (a *App) GetInteractionsForCurrentPoint() ([]entities.Interaction, error) {
 
 func (a *App) GenerateSubclusterDescriptionPrompt() (string, error) {
 	return a.subclusterStaticDescriptionService.GenerateAndPrintSubclusterDescriptionPrompt(a.ctx)
+}
+
+func (a *App) ExitGame() {
+	// Безопасное закрытие приложения через os.Exit
+	os.Exit(0)
 }

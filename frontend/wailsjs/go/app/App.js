@@ -6,6 +6,10 @@ export function DeleteSave(arg1) {
   return window['go']['app']['App']['DeleteSave'](arg1);
 }
 
+export function ExitGame() {
+  return window['go']['app']['App']['ExitGame']();
+}
+
 export function GenerateSubclusterDescriptionPrompt() {
   return window['go']['app']['App']['GenerateSubclusterDescriptionPrompt']();
 }

@@ -1,10 +1,12 @@
 <script lang="ts">
 	import LocationScreen from "./lib/LocationScreen.svelte"
+	import MainMenu from "./lib/MainMenu.svelte"
 	import { onMount } from "svelte"
 
 	const playerName = "developer" // Имя для разработки
 
 	let locationScreenComponent: LocationScreen
+	let gameStarted = false // Состояние игры
 
 	onMount(() => {
 		// Слушаем событие загрузки игры
@@ -18,26 +20,52 @@
 			}
 		}
 
+		// Слушаем событие возврата в главное меню
+		const handleReturnToMainMenu = () => {
+			console.log("Received returnToMainMenu event in App.svelte")
+			returnToMainMenu()
+		}
+
 		window.addEventListener("gameLoaded", handleGameLoaded)
+		window.addEventListener("returnToMainMenu", handleReturnToMainMenu)
 
 		return () => {
 			window.removeEventListener("gameLoaded", handleGameLoaded)
+			window.removeEventListener("returnToMainMenu", handleReturnToMainMenu)
 		}
 	})
+
+	// Обработчик начала игры
+	function onGameStarted() {
+		gameStarted = true
+	}
+
+	// Функция возврата в главное меню
+	function returnToMainMenu() {
+		gameStarted = false
+	}
 </script>
 
 <main>
-	<!-- Игровой экран сразу -->
-	<div class="game-interface">
-		<div class="game-header">
-			<h1>⚔️ RPG Приключение</h1>
-			<div class="header-controls">
-				<span class="player-name">Игрок: {playerName}</span>
+	{#if !gameStarted}
+		<!-- Главное меню при запуске -->
+		<MainMenu on:gameStarted={onGameStarted} />
+	{:else}
+		<!-- Игровой экран -->
+		<div class="game-interface">
+			<div class="game-header">
+				<h1>⚔️ RPG Приключение</h1>
+				<div class="header-controls">
+					<span class="player-name">Игрок: {playerName}</span>
+					<button class="main-menu-btn" on:click={returnToMainMenu}>
+						🏠 Главное меню
+					</button>
+				</div>
 			</div>
-		</div>
 
-		<LocationScreen bind:this={locationScreenComponent} />
-	</div>
+			<LocationScreen bind:this={locationScreenComponent} />
+		</div>
+	{/if}
 </main>
 
 <style>
@@ -92,5 +120,20 @@
 		background: rgba(255, 255, 255, 0.2);
 		padding: 8px 15px;
 		border-radius: 20px;
+	}
+
+	.main-menu-btn {
+		background: rgba(255, 255, 255, 0.2);
+		color: #fff;
+		border: none;
+		padding: 8px 15px;
+		border-radius: 20px;
+		cursor: pointer;
+		font-weight: bold;
+		transition: background 0.3s ease;
+	}
+
+	.main-menu-btn:hover {
+		background: rgba(255, 255, 255, 0.3);
 	}
 </style>
